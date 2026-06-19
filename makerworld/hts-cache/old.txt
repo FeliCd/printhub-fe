@@ -1,0 +1,3 @@
+date	size'/'remotesize	flags(request:Update,Range state:File response:Modified,Chunked,gZipped)	statuscode	status ('servermsg')	MIME	Etag|Date	URL	localfile	(from URL)
+18:06:22	5582/5582	---MCZ	403	error ('Forbidden')	text/html	date:Thu,%2018%20Jun%202026%2010:59:46%20GMT	https://makerworld.com/en	c:/Users/ADMIN/Desktop/printhub/makerworld/makerworld.com/en.0.delayed	(from )
+18:06:23	3263/3263	---MCZ	403	error ('Forbidden')	text/html	date:Thu,%2018%20Jun%202026%2010:59:46%20GMT	https://makerworld.com/robots.txt		(from )

@@ -1,0 +1,35 @@
+import { ShoppingBag, Sparkles, Wallet, AlertOctagon, User } from 'lucide-react';
+import type { RouteConfig } from './routes';
+
+export const buyerMenuRoutes: RouteConfig[] = [
+  {
+    path: '/',
+    label: 'Sản phẩm & File 3D',
+    icon: <ShoppingBag size={18} />,
+    allowedRoles: ['BUYER']
+  },
+  {
+    path: '/custom',
+    label: 'Đặt in theo yêu cầu',
+    icon: <Sparkles size={18} />,
+    allowedRoles: ['BUYER']
+  },
+  {
+    path: '/wallet',
+    label: 'Ví điện tử & Nạp ví',
+    icon: <Wallet size={18} />,
+    allowedRoles: ['BUYER']
+  },
+  {
+    path: '/disputes',
+    label: 'Khiếu nại & Tranh chấp',
+    icon: <AlertOctagon size={18} />,
+    allowedRoles: ['BUYER']
+  },
+  {
+    path: '/profile',
+    label: 'Hồ sơ & Địa chỉ',
+    icon: <User size={18} />,
+    allowedRoles: ['BUYER']
+  }
+];

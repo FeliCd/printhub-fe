@@ -1,0 +1,11 @@
+{
+  "name": "printhub",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "npm run dev --prefix vite-project",
+    "build": "npm run build --prefix vite-project",
+    "lint": "npm run lint --prefix vite-project",
+    "preview": "npm run preview --prefix vite-project"
+  }
+}
