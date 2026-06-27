@@ -1,5 +1,5 @@
 import React from 'react';
-import type { WalletTransaction } from '../types';
+import type { WalletTransaction } from '@/types';
 
 interface WalletPageProps {
   walletTransactions: WalletTransaction[];
