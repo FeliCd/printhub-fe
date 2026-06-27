@@ -1,7 +1,7 @@
 import React from 'react';
 import { Search, Bell, ShoppingCart } from 'lucide-react';
-import type { AppNotification, CartItem } from '../../types';
-import { useApp } from '../../context/AppContext';
+import type { AppNotification, CartItem } from '@/types';
+import { useApp } from '@/contexts/AppContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 interface HeaderProps {

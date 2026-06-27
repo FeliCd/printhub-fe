@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import type { Dispute } from '../types';
+import type { Dispute } from '@/types';
 
 interface DisputesPageProps {
   disputes: Dispute[];

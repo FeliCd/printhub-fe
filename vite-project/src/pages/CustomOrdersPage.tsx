@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Plus, Send } from 'lucide-react';
-import type { CustomOrder } from '../types';
+import type { CustomOrder } from '@/types';
 
 interface CustomOrdersPageProps {
   customOrders: CustomOrder[];

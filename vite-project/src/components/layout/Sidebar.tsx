@@ -1,7 +1,7 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { Layers, LogOut } from 'lucide-react';
-import { route } from '../../router/routes';
+import { route } from '@/constants/routes';
 
 interface SidebarProps {
   userName: string;

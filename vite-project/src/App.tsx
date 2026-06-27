@@ -1,30 +1,32 @@
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
-import './App.css';
+import './styles/App.css';
 
 // Layout Components
-import { Sidebar } from './components/layout/Sidebar';
-import { Header } from './components/layout/Header';
+import { Sidebar } from '@/components/layout/Sidebar';
+import { Header } from '@/components/layout/Header';
 
 // Pages
-import { LoginPage } from './pages/LoginPage';
-import { CatalogPage } from './pages/CatalogPage';
-import { CustomOrdersPage } from './pages/CustomOrdersPage';
-import { PrintRequestsPage } from './pages/PrintRequestsPage';
-import { WalletPage } from './pages/WalletPage';
-import { DisputesPage } from './pages/DisputesPage';
-import { ProfilePage } from './pages/ProfilePage';
-import { AdminDashboardPage } from './pages/AdminDashboardPage';
+import { LoginPage } from '@/pages/LoginPage';
+import { CatalogPage } from '@/pages/CatalogPage';
+import { CustomOrdersPage } from '@/pages/CustomOrdersPage';
+import { PrintRequestsPage } from '@/pages/PrintRequestsPage';
+import { WalletPage } from '@/pages/WalletPage';
+import { DisputesPage } from '@/pages/DisputesPage';
+import { ProfilePage } from '@/pages/ProfilePage';
+import { AdminDashboardPage } from '@/pages/AdminDashboardPage';
+import { LandingPage } from '@/pages/LandingPage';
+import { CatalogPreviewPage } from '@/pages/CatalogPreviewPage';
 
 // Modals & Drawers
-import { ProductDetailModal } from './components/modals/ProductDetailModal';
-import { NewProductModal } from './components/modals/NewProductModal';
-import { CartDrawer } from './components/modals/CartDrawer';
-import { DisputeModal } from './components/modals/DisputeModal';
-import { CustomOrderModal } from './components/modals/CustomOrderModal';
-import { PasscodeModal } from './components/modals/PasscodeModal';
+import { ProductDetailModal } from '@/components/shared/ProductDetailModal';
+import { NewProductModal } from '@/components/shared/NewProductModal';
+import { CartDrawer } from '@/components/shared/CartDrawer';
+import { DisputeModal } from '@/components/shared/DisputeModal';
+import { CustomOrderModal } from '@/components/shared/CustomOrderModal';
+import { PasscodeModal } from '@/components/shared/PasscodeModal';
 
 // App Context
-import { useApp } from './context/AppContext';
+import { useApp } from '@/contexts/AppContext';
 
 export default function App() {
   const {
@@ -86,40 +88,60 @@ export default function App() {
 
   return (
     <HashRouter>
-      {!isAuthenticated ? (
-        <Routes>
-          <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
-          <Route path="*" element={<Navigate to="/login" replace />} />
-        </Routes>
-      ) : (
-        <div className="dashboard-container">
-          {/* Sidebar Navigation */}
-          <Sidebar
-            userName={currentUser?.name || ''}
-            userRole={currentUser?.role || 'BUYER'}
-            onLogout={handleLogout}
-          />
+      <Routes>
+        {/* Landing Page */}
+        <Route path="/" element={<LandingPage />} />
 
-          {/* Main Panel */}
-          <main className="main-content">
-            {/* Header bar */}
-            <Header
-              walletBalance={walletBalance}
-              notifications={notifications}
-              setNotifications={setNotifications}
-              isNotificationOpen={isNotificationOpen}
-              setIsNotificationOpen={setIsNotificationOpen}
-              isCartOpen={isCartOpen}
-              setIsCartOpen={setIsCartOpen}
-              cart={cart}
-            />
+        {/* Catalog Preview Page */}
+        <Route path="/catalog-preview" element={<CatalogPreviewPage />} />
 
-            {/* Dynamic Tab Router */}
-            <div className="view-container">
-              <Routes>
-                <Route
-                  path="/"
-                  element={
+        {/* Login Page */}
+        <Route
+          path="/login"
+          element={
+            !isAuthenticated ? (
+              <LoginPage onLogin={handleLogin} />
+            ) : (
+              <Navigate to="/catalog" replace />
+            )
+          }
+        />
+
+        {/* Authenticated Dashboard Routes */}
+        <Route
+          path="*"
+          element={
+            !isAuthenticated ? (
+              <Navigate to="/" replace />
+            ) : (
+              <div className="dashboard-container">
+                {/* Sidebar Navigation */}
+                <Sidebar
+                  userName={currentUser?.name || ''}
+                  userRole={currentUser?.role || 'BUYER'}
+                  onLogout={handleLogout}
+                />
+
+                {/* Main Panel */}
+                <main className="main-content">
+                  {/* Header bar */}
+                  <Header
+                    walletBalance={walletBalance}
+                    notifications={notifications}
+                    setNotifications={setNotifications}
+                    isNotificationOpen={isNotificationOpen}
+                    setIsNotificationOpen={setIsNotificationOpen}
+                    isCartOpen={isCartOpen}
+                    setIsCartOpen={setIsCartOpen}
+                    cart={cart}
+                  />
+
+                  {/* Dynamic Tab Router */}
+                  <div className="view-container">
+                    <Routes>
+                      <Route
+                        path="/catalog"
+                        element={
                     currentUser?.role === 'ADMIN' ? (
                       <Navigate to="/admin/dashboard" replace />
                     ) : (
@@ -233,66 +255,68 @@ export default function App() {
                     }
                   />
                 )}
-                <Route path="/login" element={<Navigate to="/" replace />} />
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
-            </div>
-          </main>
+                      <Route path="*" element={<Navigate to="/catalog" replace />} />
+                    </Routes>
+                  </div>
+                </main>
+              </div>
+            )
+          }
+        />
+      </Routes>
 
-          {/* PRODUCT DETAIL MODAL */}
-          {selectedProduct && (
-            <ProductDetailModal
-              product={selectedProduct}
-              onClose={() => setSelectedProduct(null)}
-              onAddToCart={handleAddToCart}
-              onDeleteProduct={handleDeleteProduct}
-            />
-          )}
-
-          {/* NEW PRODUCT MODAL */}
-          {isNewProductModalOpen && (
-            <NewProductModal
-              onClose={() => setIsNewProductModalOpen(false)}
-              onSubmit={handleAddProduct}
-            />
-          )}
-
-          {/* SHOPPING CART DRAWER / MODAL */}
-          {isCartOpen && (
-            <CartDrawer
-              cart={cart}
-              onClose={() => setIsCartOpen(false)}
-              onRemove={handleRemoveFromCart}
-              onUpdateQuantity={handleUpdateCartQuantity}
-              onCheckout={handleCheckout}
-            />
-          )}
-
-          {/* DISPUTE CREATION MODAL */}
-          {isDisputeModalOpen && (
-            <DisputeModal
-              onClose={() => setIsDisputeModalOpen(false)}
-              onSubmit={handleOpenDispute}
-            />
-          )}
-
-          {/* CUSTOM ORDER REQUEST MODAL */}
-          {isCustomOrderModalOpen && (
-            <CustomOrderModal
-              onClose={() => setIsCustomOrderModalOpen(false)}
-              onSubmit={handleRequestCustomQuote}
-            />
-          )}
-
-          {/* PASSCODE CONFIRMATION MODAL */}
-          <PasscodeModal
-            isOpen={isPasscodeModalOpen}
-            onClose={closePasscodeModal}
-            correctPasscode={walletPasscode}
-            onSuccess={passcodeCallback || (() => {})}
-          />
-        </div>
+      {/* PRODUCT DETAIL MODAL */}
+      {selectedProduct && (
+        <ProductDetailModal
+          product={selectedProduct}
+          onClose={() => setSelectedProduct(null)}
+          onAddToCart={handleAddToCart}
+          onDeleteProduct={handleDeleteProduct}
+        />
       )}
+
+      {/* NEW PRODUCT MODAL */}
+      {isNewProductModalOpen && (
+        <NewProductModal
+          onClose={() => setIsNewProductModalOpen(false)}
+          onSubmit={handleAddProduct}
+        />
+      )}
+
+      {/* SHOPPING CART DRAWER / MODAL */}
+      {isCartOpen && (
+        <CartDrawer
+          cart={cart}
+          onClose={() => setIsCartOpen(false)}
+          onRemove={handleRemoveFromCart}
+          onUpdateQuantity={handleUpdateCartQuantity}
+          onCheckout={handleCheckout}
+        />
+      )}
+
+      {/* DISPUTE CREATION MODAL */}
+      {isDisputeModalOpen && (
+        <DisputeModal
+          onClose={() => setIsDisputeModalOpen(false)}
+          onSubmit={handleOpenDispute}
+        />
+      )}
+
+      {/* CUSTOM ORDER REQUEST MODAL */}
+      {isCustomOrderModalOpen && (
+        <CustomOrderModal
+          onClose={() => setIsCustomOrderModalOpen(false)}
+          onSubmit={handleRequestCustomQuote}
+        />
+      )}
+
+      {/* PASSCODE CONFIRMATION MODAL */}
+      <PasscodeModal
+        isOpen={isPasscodeModalOpen}
+        onClose={closePasscodeModal}
+        correctPasscode={walletPasscode}
+        onSuccess={passcodeCallback || (() => {})}
+      />
     </HashRouter>
   );
 }
