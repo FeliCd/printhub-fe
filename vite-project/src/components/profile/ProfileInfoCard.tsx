@@ -1,6 +1,7 @@
 import React from 'react';
 import { User } from 'lucide-react';
 import type { Order } from '@/types';
+import { useApp } from '@/contexts/AppContext';
 
 interface ProfileInfoCardProps {
   currentUser: any;
@@ -19,6 +20,9 @@ export const ProfileInfoCard: React.FC<ProfileInfoCardProps> = ({
   makerProfile,
   orders,
 }) => {
+  const { buyerPoints, userSubscriptions } = useApp();
+  const ownedSubs = userSubscriptions.filter(s => s.userId === 'user-buyer-1' && s.isActive);
+
   return currentUser?.role === 'MAKER' ? (
     <div className="glass-card" style={{ marginBottom: 0 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
@@ -100,9 +104,9 @@ export const ProfileInfoCard: React.FC<ProfileInfoCardProps> = ({
           <div>
             <div style={{ fontSize: '18px', fontWeight: 'bold' }}>{currentUser?.name || 'Nguyễn Văn Anh'}</div>
             <div style={{ fontSize: '13px', color: 'var(--text-secondary)', display: 'flex', gap: '8px', alignItems: 'center', marginTop: '4px' }}>
-              Cấp hội viên:{' '}
+              Trạng thái gói:{' '}
               <strong style={{ color: '#ffcc00', backgroundColor: 'rgba(255, 204, 0, 0.1)', padding: '2px 8px', borderRadius: '4px', fontSize: '11px' }}>
-                Hội viên Vàng (Gold)
+                Đang dùng {ownedSubs.length} gói ưu đãi
               </strong>
             </div>
           </div>
@@ -119,10 +123,18 @@ export const ProfileInfoCard: React.FC<ProfileInfoCardProps> = ({
         </div>
 
         <div className="form-group">
-          <label>Mức chiết khấu mua hàng</label>
-          <input type="text" className="form-control" readOnly value="Giảm thêm -5% phí ship nội bộ" />
+          <label>Điểm thưởng tích lũy</label>
+          <input type="text" className="form-control" readOnly value={`${buyerPoints.toLocaleString()} điểm`} />
+        </div>
+
+        <div className="form-group">
+          <label>Các ưu đãi đang hoạt động</label>
+          <input type="text" className="form-control" readOnly value={
+            ownedSubs.map(s => s.planName).join(', ') || 'Chưa sở hữu gói ưu đãi nào'
+          } />
         </div>
       </div>
     </div>
   );
 };
+

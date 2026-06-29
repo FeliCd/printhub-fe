@@ -9,11 +9,95 @@ import type {
   CustomOrder,
   WalletTransaction,
   Dispute,
-  AppNotification
+  AppNotification,
+  SubscriptionPlan,
+  UserSubscription,
+  MockUser,
+  GiftSubscriptionRequest,
+  SubscriptionPlanRequest,
+  SubscriptionType
 } from '@/types';
 import { route } from '@/constants/routes';
 
 // Initial Mock Data
+const INITIAL_SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
+  {
+    id: 'plan-cust-freeship',
+    type: 'CUSTOMER',
+    name: 'Customer VIP Freeship Pro',
+    price: 80000,
+    benefits: 'Miễn phí vận chuyển cho tất cả đơn hàng in ấn vật lý (Freeship 100% mọi đơn hàng)',
+    requiredPoints: 800,
+    isActive: true,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: 'plan-cust-design',
+    type: 'CUSTOMER',
+    name: 'Customer Design Saver Plus',
+    price: 150000,
+    benefits: 'Giảm giá sâu khi mua các tệp tin thiết kế 3D (Giảm 15% tất cả file 3D STL)',
+    requiredPoints: 1500,
+    isActive: true,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: 'plan-cust-cashback',
+    type: 'CUSTOMER',
+    name: 'Customer Cashback Saver',
+    price: 50000,
+    benefits: 'Hoàn lại điểm tích lũy sau mỗi lần thanh toán (Hoàn 5% đơn hàng thành điểm)',
+    requiredPoints: 500,
+    isActive: true,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: 'plan-maker-silver',
+    type: 'MAKER',
+    name: 'Maker Pro Silver Ads',
+    price: 300000,
+    benefits: 'Hỗ trợ đẩy tin quảng cáo lên trang chủ và tăng độ hiển thị bản in thêm +20%',
+    isActive: true,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: 'plan-maker-gold',
+    type: 'MAKER',
+    name: 'Maker VIP Gold Premium',
+    price: 600000,
+    benefits: 'Đặc quyền đẩy tin quảng cáo không giới hạn, giảm phí hoa hồng của sàn từ 5% xuống còn 2.5%',
+    isActive: true,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  }
+];
+
+const MOCK_USERS: MockUser[] = [
+  { id: 'user-buyer-1', name: 'Nguyễn Văn Anh', role: 'BUYER' },
+  { id: 'user-buyer-2', name: 'Trần Minh Tuấn', role: 'BUYER' },
+  { id: 'user-buyer-3', name: 'Lê Thị Hương', role: 'BUYER' },
+  { id: 'user-maker-1', name: 'DragonCreator3D', role: 'MAKER' },
+  { id: 'user-maker-2', name: 'MakerLabb', role: 'MAKER' }
+];
+
+const INITIAL_USER_SUBSCRIPTIONS: UserSubscription[] = [
+  {
+    subscriptionId: 'sub-init-1',
+    userId: 'user-buyer-1',
+    username: 'Nguyễn Văn Anh',
+    planId: 'plan-cust-freeship',
+    planName: 'Customer VIP Freeship Pro',
+    planType: 'CUSTOMER',
+    startDate: new Date().toISOString().split('T')[0],
+    endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    isActive: true
+  }
+];
+
 const INITIAL_PRODUCTS: Product[] = [
   {
     id: 1,
@@ -467,13 +551,138 @@ interface AppContextType {
   handleBuyerAcceptQuote: (orderId: string) => void;
   handleMakerUploadProof: (orderId: string, img: string, note: string) => void;
   handleBuyerCompleteCustom: (orderId: string) => void;
-  handleResolveDispute: (id: string, refundAmount: number, refundType: 'FULL' | 'PARTIAL') => void;
+  handleResolveDispute: (id: string, refundAmount: number, refundType: 'FULL' | 'PARTIAL' | 'NONE') => void;
+  handleMakerSubmitEvidence: (disputeId: string, evidenceUrl: string) => void;
   handleUpdateOrderStatus: (orderId: string, status: Order['status']) => void;
   handleDeleteProduct: (productId: number) => void;
   handleLogin: (name: string, role: 'BUYER' | 'MAKER' | 'ADMIN') => void;
   handleLogout: () => void;
   isAllowed: (path: string) => boolean;
+  buyerPoints: number;
+  setBuyerPoints: React.Dispatch<React.SetStateAction<number>>;
+  subscriptionPlans: SubscriptionPlan[];
+  setSubscriptionPlans: React.Dispatch<React.SetStateAction<SubscriptionPlan[]>>;
+  userSubscriptions: UserSubscription[];
+  setUserSubscriptions: React.Dispatch<React.SetStateAction<UserSubscription[]>>;
+  mockUsers: MockUser[];
+  handleBuySubscription: (planId: string, paymentMethod: 'WALLET' | 'POINTS') => void;
+  handleAddPlan: (plan: SubscriptionPlanRequest, type: SubscriptionType) => void;
+  handleUpdatePlan: (id: string, plan: SubscriptionPlanRequest) => void;
+  handleDeletePlan: (id: string) => void;
+  handleGiftSubscription: (gift: GiftSubscriptionRequest) => void;
 }
+
+const INITIAL_ORDERS: Order[] = [
+  {
+    id: 'ORDER-5203',
+    items: [
+      {
+        product: INITIAL_PRODUCTS[0], // Articulated Dragon Toy (DIGITAL - 99k)
+        quantity: 1,
+        selectedColor: 'Đỏ',
+        selectedMaterial: 'PLA'
+      }
+    ],
+    totalAmount: 99000,
+    commissionFee: 4950,
+    status: 'COMPLETED',
+    shippingAddress: INITIAL_ADDRESSES[0],
+    date: '2026-06-16',
+    paymentMethod: 'WALLET',
+    trackingNumber: 'TRACK-8392102'
+  },
+  {
+    id: 'ORDER-6192',
+    items: [
+      {
+        product: INITIAL_PRODUCTS[6], // AMS Hub Protector (PHYSICAL - 85k)
+        quantity: 1,
+        selectedColor: 'Đen',
+        selectedMaterial: 'TPU'
+      },
+      {
+        product: INITIAL_PRODUCTS[18], // LED Mount (PHYSICAL - 35k)
+        quantity: 2,
+        selectedColor: 'Trong suốt',
+        selectedMaterial: 'PETG'
+      }
+    ],
+    totalAmount: 155000,
+    commissionFee: 7750,
+    status: 'COMPLETED',
+    shippingAddress: INITIAL_ADDRESSES[0],
+    date: '2026-06-17',
+    paymentMethod: 'WALLET',
+    trackingNumber: 'TRACK-4920194'
+  },
+  {
+    id: 'ORDER-7489',
+    items: [
+      {
+        product: INITIAL_PRODUCTS[8], // Cyberpunk Stand (PHYSICAL - 350k)
+        quantity: 1,
+        selectedColor: 'Xanh Lá',
+        selectedMaterial: 'PLA'
+      }
+    ],
+    totalAmount: 350000,
+    commissionFee: 17500,
+    status: 'PENDING',
+    shippingAddress: INITIAL_ADDRESSES[1],
+    date: '2026-06-19',
+    paymentMethod: 'WALLET',
+    trackingNumber: 'TRACK-2910405'
+  }
+];
+
+const INITIAL_DISPUTES: Dispute[] = [
+  {
+    id: 'DISP-4392',
+    orderId: 'ORDER-9923',
+    reason: 'Bản in bị cong vênh chân góc và rạn nứt bề mặt lớp, không thể lắp khớp cơ khí.',
+    evidenceUrl: 'https://images.unsplash.com/photo-1615840287214-7fe58a8b668f?q=80&w=600&auto=format&fit=cover',
+    status: 'OPEN',
+    date: '2026-06-18',
+    messages: [
+      { sender: 'BUYER', text: 'Bản in bị lỗi cong vênh nghiêm trọng.', date: '2026-06-18' }
+    ]
+  },
+  {
+    id: 'DISP-3102',
+    orderId: 'ORDER-5203',
+    reason: 'File STL bị lỗi rỗng trục xoay cơ cấu khớp.',
+    evidenceUrl: 'https://images.unsplash.com/photo-1608181114410-db2bb03679bc?q=80&w=600&auto=format&fit=cover',
+    status: 'RESOLVED',
+    date: '2026-06-16',
+    refundAmount: 99000,
+    refundType: 'FULL',
+    messages: [
+      { sender: 'BUYER', text: 'File bị lỗi xoay không khớp trục.', date: '2026-06-16' },
+      { sender: 'ADMIN', text: 'Admin đã phê duyệt phán quyết xử lý tranh chấp: Hoàn trả 100% số tiền (99.000đ) cho Người mua.', date: '2026-06-16' }
+    ]
+  }
+];
+
+const INITIAL_NOTIFICATIONS: AppNotification[] = [
+  {
+    id: 'NOTIF-1',
+    type: 'SYSTEM',
+    title: 'Chào mừng đến với PrintHub 3D',
+    description: 'Hệ thống đã kích hoạt thành công. Ví điện tử của bạn đã được nhận VND 5,000,000 tiền mặt thử nghiệm!',
+    isRead: false,
+    date: 'Vừa xong'
+  }
+];
+
+const INITIAL_WALLET_TRANSACTIONS: WalletTransaction[] = [
+  {
+    id: 'TX-1001',
+    type: 'CREDIT',
+    amount: 5000000,
+    description: 'Nạp tiền thử nghiệm hệ thống',
+    date: '2026-06-18'
+  }
+];
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
@@ -482,120 +691,145 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [currentUser, setCurrentUser] = useState<{ name: string; role: 'BUYER' | 'MAKER' | 'ADMIN' } | null>(null);
 
-  // Data States
-  const [products, setProducts] = useState<Product[]>(INITIAL_PRODUCTS);
+  // Data States loaded from localStorage
+  const [products, setProducts] = useState<Product[]>(() => {
+    const saved = localStorage.getItem('printhub_products');
+    return saved ? JSON.parse(saved) : INITIAL_PRODUCTS;
+  });
   const [cart, setCart] = useState<CartItem[]>([]);
   const [addresses, setAddresses] = useState<Address[]>(INITIAL_ADDRESSES);
-  const [orders, setOrders] = useState<Order[]>([
-    {
-      id: 'ORDER-5203',
-      items: [
-        {
-          product: INITIAL_PRODUCTS[0], // Articulated Dragon Toy (DIGITAL - 99k)
-          quantity: 1,
-          selectedColor: 'Đỏ',
-          selectedMaterial: 'PLA'
+  const [orders, setOrders] = useState<Order[]>(() => {
+    const saved = localStorage.getItem('printhub_orders');
+    return saved ? JSON.parse(saved) : INITIAL_ORDERS;
+  });
+  const [customOrders, setCustomOrders] = useState<CustomOrder[]>(() => {
+    const saved = localStorage.getItem('printhub_custom_orders');
+    return saved ? JSON.parse(saved) : INITIAL_CUSTOM_ORDERS;
+  });
+  const [disputes, setDisputes] = useState<Dispute[]>(() => {
+    const saved = localStorage.getItem('printhub_disputes');
+    return saved ? JSON.parse(saved) : INITIAL_DISPUTES;
+  });
+  const [notifications, setNotifications] = useState<AppNotification[]>(() => {
+    const saved = localStorage.getItem('printhub_notifications');
+    return saved ? JSON.parse(saved) : INITIAL_NOTIFICATIONS;
+  });
+  const [walletBalance, setWalletBalance] = useState<number>(() => {
+    const saved = localStorage.getItem('printhub_wallet_balance');
+    return saved ? Number(saved) : 5000000;
+  });
+  const [walletTransactions, setWalletTransactions] = useState<WalletTransaction[]>(() => {
+    const saved = localStorage.getItem('printhub_wallet_transactions');
+    return saved ? JSON.parse(saved) : INITIAL_WALLET_TRANSACTIONS;
+  });
+
+  // Buyer points & Subscription states loaded from localStorage
+  const [buyerPoints, setBuyerPoints] = useState<number>(() => {
+    const saved = localStorage.getItem('printhub_buyer_points');
+    return saved ? Number(saved) : 3000;
+  });
+  const [subscriptionPlans, setSubscriptionPlans] = useState<SubscriptionPlan[]>(() => {
+    const saved = localStorage.getItem('printhub_subscription_plans');
+    return saved ? JSON.parse(saved) : INITIAL_SUBSCRIPTION_PLANS;
+  });
+  const [userSubscriptions, setUserSubscriptions] = useState<UserSubscription[]>(() => {
+    const saved = localStorage.getItem('printhub_user_subscriptions');
+    return saved ? JSON.parse(saved) : INITIAL_USER_SUBSCRIPTIONS;
+  });
+
+  // useEffect hooks to save changes to localStorage
+  React.useEffect(() => {
+    localStorage.setItem('printhub_products', JSON.stringify(products));
+  }, [products]);
+
+  React.useEffect(() => {
+    localStorage.setItem('printhub_orders', JSON.stringify(orders));
+  }, [orders]);
+
+  React.useEffect(() => {
+    localStorage.setItem('printhub_custom_orders', JSON.stringify(customOrders));
+  }, [customOrders]);
+
+  React.useEffect(() => {
+    localStorage.setItem('printhub_disputes', JSON.stringify(disputes));
+  }, [disputes]);
+
+  React.useEffect(() => {
+    localStorage.setItem('printhub_notifications', JSON.stringify(notifications));
+  }, [notifications]);
+
+  React.useEffect(() => {
+    localStorage.setItem('printhub_wallet_balance', String(walletBalance));
+  }, [walletBalance]);
+
+  React.useEffect(() => {
+    localStorage.setItem('printhub_wallet_transactions', JSON.stringify(walletTransactions));
+  }, [walletTransactions]);
+
+  React.useEffect(() => {
+    localStorage.setItem('printhub_buyer_points', String(buyerPoints));
+  }, [buyerPoints]);
+
+  React.useEffect(() => {
+    localStorage.setItem('printhub_subscription_plans', JSON.stringify(subscriptionPlans));
+  }, [subscriptionPlans]);
+
+  React.useEffect(() => {
+    localStorage.setItem('printhub_user_subscriptions', JSON.stringify(userSubscriptions));
+  }, [userSubscriptions]);
+
+  // Sync state between browser tabs using 'storage' event listener
+  React.useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.newValue === null) return;
+      try {
+        switch (e.key) {
+          case 'printhub_products':
+            setProducts(JSON.parse(e.newValue));
+            break;
+          case 'printhub_orders':
+            setOrders(JSON.parse(e.newValue));
+            break;
+          case 'printhub_custom_orders':
+            setCustomOrders(JSON.parse(e.newValue));
+            break;
+          case 'printhub_disputes':
+            setDisputes(JSON.parse(e.newValue));
+            break;
+          case 'printhub_notifications':
+            setNotifications(JSON.parse(e.newValue));
+            break;
+          case 'printhub_wallet_balance':
+            setWalletBalance(Number(e.newValue));
+            break;
+          case 'printhub_wallet_transactions':
+            setWalletTransactions(JSON.parse(e.newValue));
+            break;
+          case 'printhub_buyer_points':
+            setBuyerPoints(Number(e.newValue));
+            break;
+          case 'printhub_subscription_plans':
+            setSubscriptionPlans(JSON.parse(e.newValue));
+            break;
+          case 'printhub_user_subscriptions':
+            setUserSubscriptions(JSON.parse(e.newValue));
+            break;
+          case 'walletPasscode':
+            setWalletPasscode(e.newValue);
+            break;
+          default:
+            break;
         }
-      ],
-      totalAmount: 99000,
-      commissionFee: 4950,
-      status: 'COMPLETED',
-      shippingAddress: INITIAL_ADDRESSES[0],
-      date: '2026-06-16',
-      paymentMethod: 'WALLET',
-      trackingNumber: 'TRACK-8392102'
-    },
-    {
-      id: 'ORDER-6192',
-      items: [
-        {
-          product: INITIAL_PRODUCTS[6], // AMS Hub Protector (PHYSICAL - 85k)
-          quantity: 1,
-          selectedColor: 'Đen',
-          selectedMaterial: 'TPU'
-        },
-        {
-          product: INITIAL_PRODUCTS[18], // LED Mount (PHYSICAL - 35k)
-          quantity: 2,
-          selectedColor: 'Trong suốt',
-          selectedMaterial: 'PETG'
-        }
-      ],
-      totalAmount: 155000,
-      commissionFee: 7750,
-      status: 'COMPLETED',
-      shippingAddress: INITIAL_ADDRESSES[0],
-      date: '2026-06-17',
-      paymentMethod: 'WALLET',
-      trackingNumber: 'TRACK-4920194'
-    },
-    {
-      id: 'ORDER-7489',
-      items: [
-        {
-          product: INITIAL_PRODUCTS[8], // Cyberpunk Stand (PHYSICAL - 350k)
-          quantity: 1,
-          selectedColor: 'Xanh Lá',
-          selectedMaterial: 'PLA'
-        }
-      ],
-      totalAmount: 350000,
-      commissionFee: 17500,
-      status: 'PENDING',
-      shippingAddress: INITIAL_ADDRESSES[1],
-      date: '2026-06-19',
-      paymentMethod: 'WALLET',
-      trackingNumber: 'TRACK-2910405'
-    }
-  ]);
-  const [customOrders, setCustomOrders] = useState<CustomOrder[]>(INITIAL_CUSTOM_ORDERS);
-  const [disputes, setDisputes] = useState<Dispute[]>([
-    {
-      id: 'DISP-4392',
-      orderId: 'ORDER-9923',
-      reason: 'Bản in bị cong vênh chân góc và rạn nứt bề mặt lớp, không thể lắp khớp cơ khí.',
-      evidenceUrl: 'https://images.unsplash.com/photo-1615840287214-7fe58a8b668f?q=80&w=600&auto=format&fit=cover',
-      status: 'OPEN',
-      date: '2026-06-18',
-      messages: [
-        { sender: 'BUYER', text: 'Bản in bị lỗi cong vênh nghiêm trọng.', date: '2026-06-18' }
-      ]
-    },
-    {
-      id: 'DISP-3102',
-      orderId: 'ORDER-5203',
-      reason: 'File STL bị lỗi rỗng trục xoay cơ cấu khớp.',
-      evidenceUrl: 'https://images.unsplash.com/photo-1608181114410-db2bb03679bc?q=80&w=600&auto=format&fit=cover',
-      status: 'RESOLVED',
-      date: '2026-06-16',
-      refundAmount: 99000,
-      refundType: 'FULL',
-      messages: [
-        { sender: 'BUYER', text: 'File bị lỗi xoay không khớp trục.', date: '2026-06-16' },
-        { sender: 'ADMIN', text: 'Admin đã phê duyệt phán quyết xử lý tranh chấp: Hoàn trả 100% số tiền (99.000đ) cho Người mua.', date: '2026-06-16' }
-      ]
-    }
-  ]);
-  const [notifications, setNotifications] = useState<AppNotification[]>([
-    {
-      id: 'NOTIF-1',
-      type: 'SYSTEM',
-      title: 'Chào mừng đến với PrintHub 3D',
-      description: 'Hệ thống đã kích hoạt thành công. Ví điện tử của bạn đã được nhận VND 5,000,000 tiền mặt thử nghiệm!',
-      isRead: false,
-      date: 'Vừa xong'
-    }
-  ]);
-  const [walletBalance, setWalletBalance] = useState<number>(5000000);
-  const [walletTransactions, setWalletTransactions] = useState<WalletTransaction[]>([
-    {
-      id: 'TX-1001',
-      type: 'CREDIT',
-      amount: 5000000,
-      description: 'Nạp tiền thử nghiệm hệ thống',
-      date: '2026-06-18'
-    }
-  ]);
+      } catch (err) {
+        console.error('Error syncing tab state via storage event:', err);
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
 
   // Maker profile registration state
   const [makerProfile] = useState<MakerProfile>({
@@ -1006,7 +1240,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     addNotification('ORDER', 'Nghiệm thu hoàn tất đơn in 3D', `Đơn in 3D mã ${orderId} đã hoàn tất và giao thành công.`);
   };
 
-  const handleResolveDispute = (id: string, refundAmount: number, refundType: 'FULL' | 'PARTIAL') => {
+  const handleResolveDispute = (id: string, refundAmount: number, refundType: 'FULL' | 'PARTIAL' | 'NONE') => {
     setDisputes(prevDisputes => prevDisputes.map(d => d.id === id ? { 
       ...d, 
       status: 'RESOLVED', 
@@ -1014,23 +1248,45 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       refundType,
       messages: [
         ...d.messages,
-        { sender: 'ADMIN', text: `Admin đã phê duyệt phán quyết xử lý tranh chấp: Hoàn trả ${refundType === 'FULL' ? '100%' : '50%'} số tiền (${refundAmount.toLocaleString()}đ) cho Người mua.`, date: new Date().toISOString().split('T')[0] }
+        { 
+          sender: 'ADMIN', 
+          text: refundType === 'NONE' 
+            ? `Admin đã phê duyệt phán quyết xử lý tranh chấp: Từ chối khiếu nại (Không hoàn tiền cho Người mua vì Maker làm đúng).`
+            : `Admin đã phê duyệt phán quyết xử lý tranh chấp: Hoàn trả ${refundType === 'FULL' ? '100%' : '50%'} số tiền (${refundAmount.toLocaleString()}đ) cho Người mua.`, 
+          date: new Date().toISOString().split('T')[0] 
+        }
       ]
     } : d));
     
-    setWalletBalance(prev => prev + refundAmount);
-    setWalletTransactions(prevTx => [
-      {
-        id: `TX-${Date.now()}`,
-        type: 'CREDIT',
-        amount: refundAmount,
-        description: `Hoàn tiền tranh chấp ${id}`,
-        date: new Date().toISOString().split('T')[0]
-      },
-      ...prevTx
-    ]);
-    addNotification('PAYMENT', 'Hoàn tiền khiếu nại', `Bạn nhận được hoàn tiền +VND ${refundAmount.toLocaleString()} từ tranh chấp ${id}.`);
-    alert(`Tranh chấp đã được xử lý! Số tiền hoàn: VND ${refundAmount.toLocaleString()}`);
+    if (refundAmount > 0) {
+      setWalletBalance(prev => prev + refundAmount);
+      setWalletTransactions(prevTx => [
+        {
+          id: `TX-${Date.now()}`,
+          type: 'CREDIT',
+          amount: refundAmount,
+          description: `Hoàn tiền tranh chấp ${id}`,
+          date: new Date().toISOString().split('T')[0]
+        },
+        ...prevTx
+      ]);
+      addNotification('PAYMENT', 'Hoàn tiền khiếu nại', `Bạn nhận được hoàn tiền +VND ${refundAmount.toLocaleString()} từ tranh chấp ${id}.`);
+      alert(`Tranh chấp đã được xử lý! Số tiền hoàn: VND ${refundAmount.toLocaleString()}`);
+    } else {
+      addNotification('SYSTEM', 'Khiếu nại bị bác bỏ', `Khiếu nại tranh chấp ${id} của bạn đã bị Admin từ chối (Không hoàn tiền).`);
+      alert(`Tranh chấp đã được xử lý! Bác bỏ khiếu nại (Không hoàn tiền).`);
+    }
+  };
+
+  const handleMakerSubmitEvidence = (disputeId: string, evidenceUrl: string) => {
+    setDisputes(prev => prev.map(d => d.id === disputeId ? {
+      ...d,
+      makerEvidenceUrl: evidenceUrl,
+      messages: [
+        ...d.messages,
+        { sender: 'MAKER', text: `Nhà in đã cung cấp bằng chứng đối chứng hình ảnh.`, date: new Date().toISOString().split('T')[0] }
+      ]
+    } : d));
   };
 
   const handleUpdateOrderStatus = (orderId: string, status: Order['status']) => {
@@ -1084,6 +1340,139 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setProducts(prev => prev.filter(p => p.id !== productId));
     addNotification('SYSTEM', 'Sản phẩm đã gỡ bỏ', `Sản phẩm "${prod.name}" đã bị Quản trị viên gỡ bỏ khỏi sàn.`);
     alert(`Đã gỡ bỏ thành công sản phẩm "${prod.name}" khỏi sàn.`);
+  };
+
+  const handleBuySubscription = (planId: string, paymentMethod: 'WALLET' | 'POINTS') => {
+    const plan = subscriptionPlans.find(p => p.id === planId);
+    if (!plan) {
+      alert('Không tìm thấy thông tin gói ưu đãi!');
+      return;
+    }
+
+    const checkAndProcess = () => {
+      if (paymentMethod === 'WALLET') {
+        const cost = plan.price || 0;
+        if (walletBalance < cost) {
+          alert('Số dư ví điện tử không đủ! Vui lòng nạp thêm tiền.');
+          return;
+        }
+
+        // Deduct wallet balance
+        setWalletBalance(prev => prev - cost);
+        setWalletTransactions(prev => [
+          {
+            id: `TX-SUB-${Date.now()}`,
+            type: 'DEBIT',
+            amount: cost,
+            description: `Đăng ký gói hội viên: ${plan.name}`,
+            date: new Date().toISOString().split('T')[0]
+          },
+          ...prev
+        ]);
+      } else {
+        const costPoints = plan.requiredPoints || 0;
+        if (costPoints === 0) {
+          alert('Gói này không thể đổi bằng điểm tích lũy!');
+          return;
+        }
+        if (buyerPoints < costPoints) {
+          alert('Số dư điểm tích lũy không đủ!');
+          return;
+        }
+
+        // Deduct points balance
+        setBuyerPoints(prev => prev - costPoints);
+      }
+
+      // Add to userSubscriptions
+      const startDateStr = new Date().toISOString().split('T')[0];
+      const endDateStr = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+      const newOwned: UserSubscription = {
+        subscriptionId: `sub-uuid-${Date.now()}-${Math.floor(100 + Math.random() * 900)}`,
+        userId: currentUser?.role === 'MAKER' ? 'user-maker-1' : 'user-buyer-1',
+        username: currentUser?.name || 'Nguyễn Văn Anh',
+        planId: plan.id,
+        planName: plan.name,
+        planType: plan.type,
+        startDate: startDateStr,
+        endDate: endDateStr,
+        isActive: true
+      };
+
+      setUserSubscriptions(prev => [newOwned, ...prev]);
+      addNotification('SYSTEM', 'Đăng ký gói hội viên thành công', `Bạn đã sở hữu "${plan.name}" có thời hạn đến ngày ${endDateStr}.`);
+      alert(`Đăng ký và kích hoạt thành công gói ưu đãi "${plan.name}"!`);
+    };
+
+    if (paymentMethod === 'WALLET') {
+      openPasscodeModal(checkAndProcess);
+    } else {
+      checkAndProcess();
+    }
+  };
+
+  const handleAddPlan = (planData: SubscriptionPlanRequest, type: SubscriptionType) => {
+    const newPlan: SubscriptionPlan = {
+      id: `plan-uuid-${Date.now()}-${Math.floor(100 + Math.random() * 900)}`,
+      type,
+      name: planData.name,
+      price: planData.price,
+      benefits: planData.benefits,
+      requiredPoints: type === 'CUSTOMER' ? (planData.requiredPoints || 0) : undefined,
+      isActive: true,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    setSubscriptionPlans(prev => [...prev, newPlan]);
+    addNotification('SYSTEM', 'Gói subscription mới', `Admin đã tạo gói "${newPlan.name}" dành cho ${type === 'CUSTOMER' ? 'Khách hàng' : 'Nhà in'}.`);
+  };
+
+  const handleUpdatePlan = (id: string, planData: SubscriptionPlanRequest) => {
+    setSubscriptionPlans(prev => prev.map(p => p.id === id ? {
+      ...p,
+      name: planData.name,
+      price: planData.price,
+      benefits: planData.benefits,
+      requiredPoints: p.type === 'CUSTOMER' ? (planData.requiredPoints || 0) : undefined,
+      updatedAt: new Date().toISOString()
+    } : p));
+  };
+
+  const handleDeletePlan = (id: string) => {
+    const plan = subscriptionPlans.find(p => p.id === id);
+    if (!plan) return;
+    setSubscriptionPlans(prev => prev.filter(p => p.id !== id));
+    addNotification('SYSTEM', 'Gói subscription đã xóa', `Admin đã xóa gói "${plan.name}" khỏi hệ thống.`);
+  };
+
+  const handleGiftSubscription = (giftData: GiftSubscriptionRequest & { reason: string }) => {
+    const plan = subscriptionPlans.find(p => p.id === giftData.planId);
+    const user = MOCK_USERS.find(u => u.id === giftData.userId);
+    if (!plan || !user) {
+      alert('Không tìm thấy thông tin gói dịch vụ hoặc người dùng!');
+      return;
+    }
+
+    const startDateStr = new Date().toISOString().split('T')[0];
+    const endDateStr = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+    const newGiftSub: UserSubscription = {
+      subscriptionId: `sub-gift-uuid-${Date.now()}`,
+      userId: user.id,
+      username: user.name,
+      planId: plan.id,
+      planName: plan.name,
+      planType: plan.type,
+      startDate: startDateStr,
+      endDate: endDateStr,
+      isActive: true
+    };
+
+    setUserSubscriptions(prev => [newGiftSub, ...prev]);
+    addNotification('SYSTEM', 'Được tặng gói hội viên', `Admin đã tặng gói "${plan.name}" cho ${user.name}. Lý do: ${giftData.reason}`);
+    alert(`Đã tặng gói "${plan.name}" thành công cho người dùng ${user.name}!`);
   };
 
   const isAllowed = (path: string) => {
@@ -1164,11 +1553,24 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         handleMakerUploadProof,
         handleBuyerCompleteCustom,
         handleResolveDispute,
+        handleMakerSubmitEvidence,
         handleUpdateOrderStatus,
         handleDeleteProduct,
         handleLogin,
         handleLogout,
-        isAllowed
+        isAllowed,
+        buyerPoints,
+        setBuyerPoints,
+        subscriptionPlans,
+        setSubscriptionPlans,
+        userSubscriptions,
+        setUserSubscriptions,
+        mockUsers: MOCK_USERS,
+        handleBuySubscription,
+        handleAddPlan,
+        handleUpdatePlan,
+        handleDeletePlan,
+        handleGiftSubscription
       }}
     >
       {children}

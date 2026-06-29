@@ -1,4 +1,4 @@
-import { ShoppingBag, AlertOctagon, BarChart3 } from 'lucide-react';
+import { Gift, AlertOctagon, BarChart3 } from 'lucide-react';
 import type { RouteConfig } from './routes';
 
 export const adminMenuRoutes: RouteConfig[] = [
@@ -9,9 +9,9 @@ export const adminMenuRoutes: RouteConfig[] = [
     allowedRoles: ['ADMIN']
   },
   {
-    path: '/admin/products',
-    label: 'Quản lý sản phẩm',
-    icon: <ShoppingBag size={18} />,
+    path: '/admin/subscriptions',
+    label: 'Quản lý Subscription',
+    icon: <Gift size={18} />,
     allowedRoles: ['ADMIN']
   },
   {

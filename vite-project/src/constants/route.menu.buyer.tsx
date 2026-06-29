@@ -1,4 +1,4 @@
-import { ShoppingBag, Sparkles, Wallet, AlertOctagon, User } from 'lucide-react';
+import { ShoppingBag, Sparkles, Wallet, AlertOctagon, User, Gift } from 'lucide-react';
 import type { RouteConfig } from './routes';
 
 export const buyerMenuRoutes: RouteConfig[] = [
@@ -12,6 +12,12 @@ export const buyerMenuRoutes: RouteConfig[] = [
     path: '/custom',
     label: 'Đặt in theo yêu cầu',
     icon: <Sparkles size={18} />,
+    allowedRoles: ['BUYER']
+  },
+  {
+    path: '/subscriptions',
+    label: 'Gói hội viên & Ưu đãi',
+    icon: <Gift size={18} />,
     allowedRoles: ['BUYER']
   },
   {

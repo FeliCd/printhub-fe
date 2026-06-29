@@ -23,7 +23,18 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
   const [filterTab, setFilterTab] = useState<'ALL' | 'MINE'>('ALL');
   const [activePromoModal, setActivePromoModal] = useState<string | null>(null);
 
-  const filteredProducts = products.filter((p) => {
+  // States for advanced filtering
+  const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
+  const [selectedType, setSelectedType] = useState<string>('ALL');
+  const [minPrice, setMinPrice] = useState<number | ''>('');
+  const [maxPrice, setMaxPrice] = useState<number | ''>('');
+  const [sortBy, setSortBy] = useState<string>('DEFAULT');
+
+  // Dynamically extract categories from all products
+  const categories = Array.from(new Set(products.map((p) => p.category)));
+
+  // Filter 1: Search Query
+  const searchedProducts = products.filter((p) => {
     const query = searchQuery.toLowerCase().trim();
     if (!query) return true;
     return (
@@ -34,11 +45,40 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
     );
   });
 
-  const displayProducts = filteredProducts.filter((p) => {
+  // Filter 2: Maker filter tab (My products vs All products)
+  const tabFiltered = searchedProducts.filter((p) => {
     if (userRole === 'MAKER' && filterTab === 'MINE') {
       return p.makerName === 'DragonCreator3D';
     }
     return true;
+  });
+
+  // Filter 3: Category, Product Type, Price Range
+  const filteredProducts = tabFiltered.filter((p) => {
+    if (selectedCategory !== 'ALL' && p.category !== selectedCategory) {
+      return false;
+    }
+    if (selectedType !== 'ALL' && p.type !== selectedType) {
+      return false;
+    }
+    if (minPrice !== '' && p.price < minPrice) {
+      return false;
+    }
+    if (maxPrice !== '' && p.price > maxPrice) {
+      return false;
+    }
+    return true;
+  });
+
+  // Sort: Price ASC / DESC / DEFAULT
+  const displayProducts = [...filteredProducts].sort((a, b) => {
+    if (sortBy === 'PRICE_ASC') {
+      return a.price - b.price;
+    }
+    if (sortBy === 'PRICE_DESC') {
+      return b.price - a.price;
+    }
+    return 0;
   });
 
   return (
@@ -115,6 +155,107 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
           </button>
         </div>
       )}
+
+      {/* Advanced Filter Panel */}
+      <div className="glass-card" style={{
+        padding: '16px',
+        marginBottom: '24px',
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: '16px',
+        alignItems: 'center'
+      }}>
+        {/* Category select */}
+        <div style={{ flex: '1 1 200px' }}>
+          <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '6px', fontWeight: 'bold', textTransform: 'uppercase' }}>Danh mục</label>
+          <select
+            className="form-control"
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
+            style={{ padding: '8px 12px', cursor: 'pointer' }}
+          >
+            <option value="ALL">Tất cả danh mục</option>
+            {categories.map((cat) => (
+              <option key={cat} value={cat}>{cat}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* Product Type select */}
+        <div style={{ flex: '1 1 150px' }}>
+          <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '6px', fontWeight: 'bold', textTransform: 'uppercase' }}>Loại sản phẩm</label>
+          <select
+            className="form-control"
+            value={selectedType}
+            onChange={(e) => setSelectedType(e.target.value)}
+            style={{ padding: '8px 12px', cursor: 'pointer' }}
+          >
+            <option value="ALL">Tất cả loại</option>
+            <option value="DIGITAL">File 3D (.STL)</option>
+            <option value="PHYSICAL">Mô hình In (Vật lý)</option>
+          </select>
+        </div>
+
+        {/* Min Price input */}
+        <div style={{ flex: '1 1 120px' }}>
+          <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '6px', fontWeight: 'bold', textTransform: 'uppercase' }}>Giá tối thiểu (đ)</label>
+          <input
+            type="number"
+            className="form-control"
+            placeholder="Từ..."
+            value={minPrice}
+            onChange={(e) => setMinPrice(e.target.value === '' ? '' : Number(e.target.value))}
+            style={{ padding: '8px 12px' }}
+          />
+        </div>
+
+        {/* Max Price input */}
+        <div style={{ flex: '1 1 120px' }}>
+          <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '6px', fontWeight: 'bold', textTransform: 'uppercase' }}>Giá tối đa (đ)</label>
+          <input
+            type="number"
+            className="form-control"
+            placeholder="Đến..."
+            value={maxPrice}
+            onChange={(e) => setMaxPrice(e.target.value === '' ? '' : Number(e.target.value))}
+            style={{ padding: '8px 12px' }}
+          />
+        </div>
+
+        {/* Sorting selection */}
+        <div style={{ flex: '1 1 150px' }}>
+          <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '6px', fontWeight: 'bold', textTransform: 'uppercase' }}>Sắp xếp giá</label>
+          <select
+            className="form-control"
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            style={{ padding: '8px 12px', cursor: 'pointer' }}
+          >
+            <option value="DEFAULT">Mặc định</option>
+            <option value="PRICE_ASC">Giá: Thấp đến Cao</option>
+            <option value="PRICE_DESC">Giá: Cao đến Thấp</option>
+          </select>
+        </div>
+
+        {/* Reset Filter Button */}
+        {(selectedCategory !== 'ALL' || selectedType !== 'ALL' || minPrice !== '' || maxPrice !== '' || sortBy !== 'DEFAULT') && (
+          <div style={{ alignSelf: 'flex-end', height: '38px', display: 'flex', alignItems: 'center' }}>
+            <button
+              onClick={() => {
+                setSelectedCategory('ALL');
+                setSelectedType('ALL');
+                setMinPrice('');
+                setMaxPrice('');
+                setSortBy('DEFAULT');
+              }}
+              className="btn btn-secondary"
+              style={{ padding: '8px 16px', fontSize: '12px', height: '100%', display: 'flex', alignItems: 'center' }}
+            >
+              Đặt lại
+            </button>
+          </div>
+        )}
+      </div>
 
       {/* Grid Cards */}
       {displayProducts.length === 0 ? (

@@ -88,9 +88,10 @@ export interface Dispute {
   orderId: string;
   reason: string;
   evidenceUrl: string;
+  makerEvidenceUrl?: string;
   status: 'OPEN' | 'RESOLVED';
   refundAmount?: number;
-  refundType?: 'FULL' | 'PARTIAL';
+  refundType?: 'FULL' | 'PARTIAL' | 'NONE';
   date: string;
   messages: { sender: string; text: string; date: string }[];
 }
@@ -103,3 +104,49 @@ export interface AppNotification {
   isRead: boolean;
   date: string;
 }
+
+export type SubscriptionType = 'CUSTOMER' | 'MAKER';
+
+export interface SubscriptionPlan {
+  id: string; // UUID
+  type: SubscriptionType;
+  name: string;
+  price: number; // BigDecimal
+  benefits: string;
+  requiredPoints?: number; // integer (Maker plan can be blank/null)
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UserSubscription {
+  subscriptionId: string; // UUID
+  userId: string; // UUID
+  username: string;
+  planId: string; // UUID
+  planName: string;
+  planType: SubscriptionType;
+  startDate: string;
+  endDate: string;
+  isActive: boolean;
+}
+
+export interface MockUser {
+  id: string; // UUID
+  name: string;
+  role: 'BUYER' | 'MAKER';
+}
+
+export interface GiftSubscriptionRequest {
+  userId: string; // UUID
+  planId: string; // UUID
+  reason: string;
+}
+
+export interface SubscriptionPlanRequest {
+  name: string;
+  price: number;
+  benefits: string;
+  requiredPoints?: number;
+}
+

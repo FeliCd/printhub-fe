@@ -33,8 +33,8 @@ export const Header: React.FC<HeaderProps> = ({
     setSearchQuery(val);
     
     // Redirect to home/catalog page if searching from another page
-    if (location.pathname !== '/' && val.trim() !== '') {
-      navigate('/');
+    if (location.pathname !== '/catalog' && val.trim() !== '') {
+      navigate('/catalog');
     }
   };
 

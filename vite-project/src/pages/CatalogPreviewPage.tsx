@@ -25,8 +25,18 @@ export const CatalogPreviewPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
-  // Filter products by search query
-  const filteredProducts = products.filter((p) => {
+  // States for advanced filtering
+  const [selectedCategory, setSelectedCategory] = useState('ALL');
+  const [selectedType, setSelectedType] = useState('ALL');
+  const [minPrice, setMinPrice] = useState<number | ''>('');
+  const [maxPrice, setMaxPrice] = useState<number | ''>('');
+  const [sortBy, setSortBy] = useState('DEFAULT');
+
+  // Dynamic category extraction
+  const categories = Array.from(new Set(products.map((p) => p.category)));
+
+  // Filter 1: Search Query
+  const searchedProducts = products.filter((p) => {
     const query = searchQuery.toLowerCase().trim();
     if (!query) return true;
     return (
@@ -35,6 +45,34 @@ export const CatalogPreviewPage: React.FC = () => {
       p.makerName.toLowerCase().includes(query) ||
       (p.description && p.description.toLowerCase().includes(query))
     );
+  });
+
+  // Filter 2: Category, Product Type, Price Range
+  const filteredProducts = searchedProducts.filter((p) => {
+    if (selectedCategory !== 'ALL' && p.category !== selectedCategory) {
+      return false;
+    }
+    if (selectedType !== 'ALL' && p.type !== selectedType) {
+      return false;
+    }
+    if (minPrice !== '' && p.price < minPrice) {
+      return false;
+    }
+    if (maxPrice !== '' && p.price > maxPrice) {
+      return false;
+    }
+    return true;
+  });
+
+  // Sort: Price ASC / DESC / DEFAULT
+  const displayProducts = [...filteredProducts].sort((a, b) => {
+    if (sortBy === 'PRICE_ASC') {
+      return a.price - b.price;
+    }
+    if (sortBy === 'PRICE_DESC') {
+      return b.price - a.price;
+    }
+    return 0;
   });
 
   return (
@@ -115,12 +153,100 @@ export const CatalogPreviewPage: React.FC = () => {
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
+
+          {/* Advanced Filters */}
+          <div className="mt-8 bg-white/5 border border-white/10 rounded-2xl p-4 flex flex-wrap gap-4 text-left max-w-4xl mx-auto">
+            {/* Category Select */}
+            <div className="flex-1 min-w-[180px]">
+              <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1.5 font-bold">Danh mục</label>
+              <select
+                className="w-full bg-black/40 border border-white/10 rounded-lg py-1.5 px-3 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-[#39FF14]/50 focus:ring-1 focus:ring-[#39FF14]/50 cursor-pointer"
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+              >
+                <option value="ALL">Tất cả danh mục</option>
+                {categories.map((cat) => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Product Type Select */}
+            <div className="flex-1 min-w-[140px]">
+              <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1.5 font-bold">Loại sản phẩm</label>
+              <select
+                className="w-full bg-black/40 border border-white/10 rounded-lg py-1.5 px-3 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-[#39FF14]/50 focus:ring-1 focus:ring-[#39FF14]/50 cursor-pointer"
+                value={selectedType}
+                onChange={(e) => setSelectedType(e.target.value)}
+              >
+                <option value="ALL">Tất cả loại</option>
+                <option value="DIGITAL">File 3D (.STL)</option>
+                <option value="PHYSICAL">Mô hình In (Vật lý)</option>
+              </select>
+            </div>
+
+            {/* Min Price */}
+            <div className="w-[110px]">
+              <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1.5 font-bold">Giá tối thiểu</label>
+              <input
+                type="number"
+                placeholder="Từ..."
+                className="w-full bg-black/40 border border-white/10 rounded-lg py-1.5 px-3 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-[#39FF14]/50 focus:ring-1 focus:ring-[#39FF14]/50"
+                value={minPrice}
+                onChange={(e) => setMinPrice(e.target.value === '' ? '' : Number(e.target.value))}
+              />
+            </div>
+
+            {/* Max Price */}
+            <div className="w-[110px]">
+              <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1.5 font-bold">Giá tối đa</label>
+              <input
+                type="number"
+                placeholder="Đến..."
+                className="w-full bg-black/40 border border-white/10 rounded-lg py-1.5 px-3 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-[#39FF14]/50 focus:ring-1 focus:ring-[#39FF14]/50"
+                value={maxPrice}
+                onChange={(e) => setMaxPrice(e.target.value === '' ? '' : Number(e.target.value))}
+              />
+            </div>
+
+            {/* Sorting */}
+            <div className="flex-1 min-w-[140px]">
+              <label className="block text-[10px] text-gray-500 uppercase tracking-widest mb-1.5 font-bold">Sắp xếp giá</label>
+              <select
+                className="w-full bg-black/40 border border-white/10 rounded-lg py-1.5 px-3 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-[#39FF14]/50 focus:ring-1 focus:ring-[#39FF14]/50 cursor-pointer"
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+              >
+                <option value="DEFAULT">Mặc định</option>
+                <option value="PRICE_ASC">Giá: Thấp đến Cao</option>
+                <option value="PRICE_DESC">Giá: Cao đến Thấp</option>
+              </select>
+            </div>
+
+            {/* Reset Button */}
+            {(selectedCategory !== 'ALL' || selectedType !== 'ALL' || minPrice !== '' || maxPrice !== '' || sortBy !== 'DEFAULT') && (
+              <div className="flex items-end">
+                <button
+                  onClick={() => {
+                    setSelectedCategory('ALL');
+                    setSelectedType('ALL');
+                    setMinPrice('');
+                    setMaxPrice('');
+                    setSortBy('DEFAULT');
+                  }}
+                  className="bg-white/5 hover:bg-[#39FF14]/20 border border-white/10 hover:border-[#39FF14]/30 text-white rounded-lg py-1.5 px-4 text-xs font-semibold transition-colors cursor-pointer"
+                >
+                  Đặt lại
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </section>
 
       {/* Main Grid Area */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        {filteredProducts.length === 0 ? (
+        {displayProducts.length === 0 ? (
           <div className="text-center py-16 bg-white/5 border border-white/10 rounded-2xl max-w-md mx-auto">
             <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center text-gray-500 mx-auto mb-4">
               <Search size={22} />
@@ -130,7 +256,7 @@ export const CatalogPreviewPage: React.FC = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {filteredProducts.map((p) => (
+            {displayProducts.map((p) => (
               <div
                 key={p.id}
                 className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden hover:border-[#39FF14]/40 transition-all duration-300 flex flex-col group"

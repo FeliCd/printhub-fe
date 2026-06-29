@@ -16,6 +16,8 @@ import { ProfilePage } from '@/pages/ProfilePage';
 import { AdminDashboardPage } from '@/pages/AdminDashboardPage';
 import { LandingPage } from '@/pages/LandingPage';
 import { CatalogPreviewPage } from '@/pages/CatalogPreviewPage';
+import { SubscriptionsPage } from '@/pages/SubscriptionsPage';
+import { AdminSubscriptionsPage } from '@/pages/AdminSubscriptionsPage';
 
 // Modals & Drawers
 import { ProductDetailModal } from '@/components/shared/ProductDetailModal';
@@ -168,6 +170,14 @@ export default function App() {
                     }
                   />
                 )}
+                {isAllowed('/subscriptions') && (
+                  <Route
+                    path="/subscriptions"
+                    element={
+                      <SubscriptionsPage />
+                    }
+                  />
+                )}
                 {isAllowed('/print-requests') && (
                   <Route
                     path="/print-requests"
@@ -216,17 +226,10 @@ export default function App() {
                     element={<AdminDashboardPage />}
                   />
                 )}
-                {isAllowed('/admin/products') && (
+                {isAllowed('/admin/subscriptions') && (
                   <Route
-                    path="/admin/products"
-                    element={
-                      <CatalogPage
-                        products={products}
-                        userRole="ADMIN"
-                        onAddProductClick={() => setIsNewProductModalOpen(true)}
-                        onProductClick={(p) => setSelectedProduct(p)}
-                      />
-                    }
+                    path="/admin/subscriptions"
+                    element={<AdminSubscriptionsPage />}
                   />
                 )}
                 {isAllowed('/admin/disputes') && (
