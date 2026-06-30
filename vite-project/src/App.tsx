@@ -1,3 +1,4 @@
+import React, { useState } from 'react';
 import { HashRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import './styles/App.css';
 
@@ -59,8 +60,10 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({
   children,
 }) => {
   const location = useLocation();
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+
   return (
-    <div className="dashboard-container">
+    <div className={`dashboard-container ${isSidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
       {/* Sidebar Navigation */}
       <Sidebar
         userName={currentUser?.name || ''}
@@ -80,6 +83,8 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({
           isCartOpen={isCartOpen}
           setIsCartOpen={setIsCartOpen}
           cart={cart}
+          isSidebarCollapsed={isSidebarCollapsed}
+          onToggleSidebar={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
         />
 
         {/* Dynamic Tab Router */}

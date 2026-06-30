@@ -570,6 +570,8 @@ interface AppContextType {
   handleUpdatePlan: (id: string, plan: SubscriptionPlanRequest) => void;
   handleDeletePlan: (id: string) => void;
   handleGiftSubscription: (gift: GiftSubscriptionRequest) => void;
+  theme: 'dark' | 'light';
+  toggleTheme: () => void;
 }
 
 const INITIAL_ORDERS: Order[] = [
@@ -736,6 +738,28 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const saved = localStorage.getItem('printhub_user_subscriptions');
     return saved ? JSON.parse(saved) : INITIAL_USER_SUBSCRIPTIONS;
   });
+
+  // Global theme state defaulting to 'dark'
+  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
+    const saved = localStorage.getItem('printhub_theme');
+    return (saved === 'dark' || saved === 'light') ? saved : 'dark';
+  });
+
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
+  };
+
+  // useEffect to dynamically switch global theme classes
+  React.useEffect(() => {
+    localStorage.setItem('printhub_theme', theme);
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+      document.documentElement.classList.remove('light');
+    } else {
+      document.documentElement.classList.add('light');
+      document.documentElement.classList.remove('dark');
+    }
+  }, [theme]);
 
   // useEffect hooks to save changes to localStorage
   React.useEffect(() => {
@@ -1570,7 +1594,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         handleAddPlan,
         handleUpdatePlan,
         handleDeletePlan,
-        handleGiftSubscription
+        handleGiftSubscription,
+        theme,
+        toggleTheme
       }}
     >
       {children}

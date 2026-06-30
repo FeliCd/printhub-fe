@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, Bell, ShoppingCart } from 'lucide-react';
+import { Search, Bell, ShoppingCart, Sun, Moon, Menu } from 'lucide-react';
 import type { AppNotification, CartItem } from '@/types';
 import { useApp } from '@/contexts/AppContext';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -13,6 +13,8 @@ interface HeaderProps {
   isCartOpen: boolean;
   setIsCartOpen: (open: boolean) => void;
   cart: CartItem[];
+  isSidebarCollapsed: boolean;
+  onToggleSidebar: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -23,8 +25,10 @@ export const Header: React.FC<HeaderProps> = ({
   setIsNotificationOpen,
   cart,
   setIsCartOpen,
+  isSidebarCollapsed,
+  onToggleSidebar,
 }) => {
-  const { searchQuery, setSearchQuery, currentUser } = useApp();
+  const { searchQuery, setSearchQuery, currentUser, theme, toggleTheme } = useApp();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -40,14 +44,34 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <header className="app-header">
-      <div className="search-bar">
-        <Search size={16} className="text-muted" />
-        <input 
-          type="text" 
-          placeholder="Tìm sản phẩm, máy in, file STL..." 
-          value={searchQuery}
-          onChange={handleSearchChange}
-        />
+      <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+        <button
+          onClick={onToggleSidebar}
+          className="btn btn-secondary"
+          style={{
+            padding: '8px',
+            borderRadius: '8px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            border: '1px solid var(--border)',
+            background: 'var(--bg-secondary)',
+            color: 'var(--text-primary)',
+          }}
+          title={isSidebarCollapsed ? "Hiện thanh Sidebar" : "Ẩn thanh Sidebar"}
+        >
+          <Menu size={18} />
+        </button>
+        <div className="search-bar">
+          <Search size={16} className="text-muted" />
+          <input 
+            type="text" 
+            placeholder="Tìm sản phẩm, máy in, file STL..." 
+            value={searchQuery}
+            onChange={handleSearchChange}
+          />
+        </div>
       </div>
 
       <div className="header-actions">
@@ -100,6 +124,17 @@ export const Header: React.FC<HeaderProps> = ({
             <span>Ví:</span> {walletBalance.toLocaleString()}đ
           </div>
         )}
+
+        {/* Global Theme Toggle Switch */}
+        <div
+          className={`theme-switch ${theme}`}
+          onClick={toggleTheme}
+          title={theme === 'dark' ? "Chuyển sang giao diện sáng" : "Chuyển sang giao diện tối"}
+        >
+          <div className="theme-switch-knob">
+            {theme === 'dark' ? <Moon size={10} style={{ fill: 'currentColor' }} /> : <Sun size={10} style={{ fill: 'currentColor' }} />}
+          </div>
+        </div>
 
         {/* Notifications Bell */}
         <div style={{ position: 'relative' }}>
