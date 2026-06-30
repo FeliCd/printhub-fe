@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { Sun, Moon } from "lucide-react";
+import { useApp } from "@/contexts/AppContext";
 import LoginCard from "./login-1";
 
 interface AnimatedSignInProps {
@@ -7,16 +8,8 @@ interface AnimatedSignInProps {
 }
 
 const AnimatedSignIn: React.FC<AnimatedSignInProps> = ({ onLogin }) => {
-  const [isDarkMode, setIsDarkMode] = useState(true);
-
-  const toggleDarkMode = () => {
-    setIsDarkMode((prev) => !prev);
-    document.documentElement.classList.toggle("dark-mode");
-  };
-
-  useEffect(() => {
-    document.documentElement.classList.add("dark-mode");
-  }, []);
+  const { theme, toggleTheme } = useApp();
+  const isDarkMode = theme === 'dark';
 
   useEffect(() => {
     const canvas = document.getElementById("particles-canvas") as HTMLCanvasElement;
@@ -85,10 +78,18 @@ const AnimatedSignIn: React.FC<AnimatedSignInProps> = ({ onLogin }) => {
       {/* Animated particles canvas */}
       <canvas id="particles-canvas" className="particles-canvas" />
 
-      {/* Theme toggle */}
-      <button className="theme-toggle" onClick={toggleDarkMode} aria-label="Toggle theme">
-        {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
-      </button>
+      {/* Theme toggle switch */}
+      <div className="theme-toggle-container">
+        <div
+          className={`theme-switch ${theme}`}
+          onClick={toggleTheme}
+          title={theme === 'dark' ? "Chuyển sang giao diện sáng" : "Chuyển sang giao diện tối"}
+        >
+          <div className="theme-switch-knob">
+            {theme === 'dark' ? <Moon size={10} style={{ fill: 'currentColor' }} /> : <Sun size={10} style={{ fill: 'currentColor' }} />}
+          </div>
+        </div>
+      </div>
 
       {/* Login card (login-1 style) — rendered over the animated background */}
       <div style={{ position: 'relative', zIndex: 10, width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '24px 16px', animation: 'cardReveal 0.7s cubic-bezier(0.16,1,0.3,1) both' }}>
