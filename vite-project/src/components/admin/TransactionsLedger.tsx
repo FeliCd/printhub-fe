@@ -14,8 +14,8 @@ export const TransactionsLedger: React.FC<TransactionsLedgerProps> = ({
 }) => {
   return (
     <div className="glass-card" style={{ marginBottom: 0 }}>
-      <h2 style={{ fontSize: '15px', marginBottom: '4px' }}>Sổ cái Giao dịch Thành công (Success Ledger)</h2>
-      <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '16px' }}>Các đơn hàng catalog và in theo thiết kế đã thanh toán & nghiệm thu</p>
+      <h2 style={{ fontSize: '15px', marginBottom: '4px' }}>Sổ cái Giao dịch (Transactions Ledger)</h2>
+      <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '16px' }}>Các đơn hàng catalog và in theo thiết kế đã thanh toán</p>
       
       <div className="app-table-container">
         <table className="app-table">
@@ -23,7 +23,7 @@ export const TransactionsLedger: React.FC<TransactionsLedgerProps> = ({
             <tr>
               <th>Mã đơn</th>
               <th>Phân loại</th>
-              <th>Ngày hoàn tất</th>
+              <th>Ngày giao dịch</th>
               <th>Tổng tiền hàng</th>
               <th>Phí sàn (5%)</th>
             </tr>

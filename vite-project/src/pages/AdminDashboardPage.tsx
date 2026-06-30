@@ -8,20 +8,20 @@ import { DisputesLedger } from '@/components/admin/DisputesLedger';
 export const AdminDashboardPage: React.FC = () => {
   const { orders, customOrders, disputes, products } = useApp();
 
-  // Calculate completed standard orders
-  const completedStandardOrders = orders.filter(o => o.status === 'COMPLETED');
-  const totalStandardGross = completedStandardOrders.reduce((sum, o) => sum + o.totalAmount, 0);
-  const totalStandardComm = completedStandardOrders.reduce((sum, o) => sum + o.commissionFee, 0);
+  // Calculate paid standard orders (all placed catalog/standard orders are paid)
+  const paidStandardOrders = orders.filter(o => o.status !== 'CANCELLED');
+  const totalStandardGross = paidStandardOrders.reduce((sum, o) => sum + o.totalAmount, 0);
+  const totalStandardComm = paidStandardOrders.reduce((sum, o) => sum + o.commissionFee, 0);
 
-  // Calculate completed custom orders (escrowed/paid and completed)
-  const completedCustomOrders = customOrders.filter(co => co.status === 'COMPLETED');
-  const totalCustomGross = completedCustomOrders.reduce((sum, co) => sum + (co.quotedPrice || 0), 0);
-  const totalCustomComm = completedCustomOrders.reduce((sum, co) => sum + Math.round((co.quotedPrice || 0) * 0.05), 0);
+  // Calculate paid custom orders (PAID, PRINTING, SHIPPED, COMPLETED)
+  const paidCustomOrders = customOrders.filter(co => ['PAID', 'PRINTING', 'SHIPPED', 'COMPLETED'].includes(co.status));
+  const totalCustomGross = paidCustomOrders.reduce((sum, co) => sum + (co.quotedPrice || 0), 0);
+  const totalCustomComm = paidCustomOrders.reduce((sum, co) => sum + Math.round((co.quotedPrice || 0) * 0.05), 0);
 
   // Combined totals
   const totalGross = totalStandardGross + totalCustomGross;
   const totalCommission = totalStandardComm + totalCustomComm;
-  const totalCompletedCount = completedStandardOrders.length + completedCustomOrders.length;
+  const totalCompletedCount = paidStandardOrders.length + paidCustomOrders.length;
 
   // Monthly mock revenue data for CSS bar chart
   const MOCK_MONTHLY_REVENUE = [
@@ -50,8 +50,8 @@ export const AdminDashboardPage: React.FC = () => {
         totalCommission={totalCommission}
         totalGross={totalGross}
         totalCompletedCount={totalCompletedCount}
-        completedStandardOrdersCount={completedStandardOrders.length}
-        completedCustomOrdersCount={completedCustomOrders.length}
+        completedStandardOrdersCount={paidStandardOrders.length}
+        completedCustomOrdersCount={paidCustomOrders.length}
         productsCount={products.length}
       />
 
@@ -66,8 +66,8 @@ export const AdminDashboardPage: React.FC = () => {
 
         {/* Right Column: Transactions Ledger */}
         <TransactionsLedger
-          completedStandardOrders={completedStandardOrders}
-          completedCustomOrders={completedCustomOrders}
+          completedStandardOrders={paidStandardOrders}
+          completedCustomOrders={paidCustomOrders}
           totalCompletedCount={totalCompletedCount}
         />
       </div>

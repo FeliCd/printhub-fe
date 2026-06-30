@@ -45,7 +45,7 @@ export const StatsGrid: React.FC<StatsGridProps> = ({
             {totalCommission.toLocaleString()}đ
           </div>
           <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>
-            Từ {totalCompletedCount} đơn thành công
+            Từ {totalCompletedCount} đơn đã thanh toán
           </div>
         </div>
       </div>
@@ -90,7 +90,7 @@ export const StatsGrid: React.FC<StatsGridProps> = ({
           <ClipboardCheck size={24} />
         </div>
         <div>
-          <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '4px' }}>Đơn hàng thành công</div>
+          <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '4px' }}>Đơn hàng đã thanh toán</div>
           <div style={{ fontSize: '20px', fontWeight: 'bold', fontFamily: 'var(--mono)' }}>
             {totalCompletedCount} <span style={{ fontSize: '13px', fontWeight: 'normal', color: 'var(--text-secondary)' }}>đơn</span>
           </div>
