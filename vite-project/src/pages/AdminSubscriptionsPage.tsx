@@ -113,7 +113,7 @@ export const AdminSubscriptionsPage: React.FC = () => {
   const displayedPlans = subscriptionPlans.filter(p => p.type === activeTab);
 
   return (
-    <div style={{ animation: 'modal-fadeIn 0.4s ease-out' }}>
+    <div>
       {/* Title */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
         <div>

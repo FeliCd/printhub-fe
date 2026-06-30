@@ -37,7 +37,7 @@ export const DisputesPage: React.FC<DisputesPageProps> = ({
   };
 
   return (
-    <div style={{ animation: 'modal-fadeIn 0.4s ease-out' }}>
+    <div>
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
         <div>

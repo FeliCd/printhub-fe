@@ -1,4 +1,4 @@
-import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { HashRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import './styles/App.css';
 
 // Layout Components
@@ -7,6 +7,7 @@ import { Header } from '@/components/layout/Header';
 
 // Pages
 import { LoginPage } from '@/pages/LoginPage';
+import { SignUpPage } from '@/pages/SignUpPage';
 import { CatalogPage } from '@/pages/CatalogPage';
 import { CustomOrdersPage } from '@/pages/CustomOrdersPage';
 import { PrintRequestsPage } from '@/pages/PrintRequestsPage';
@@ -29,6 +30,70 @@ import { PasscodeModal } from '@/components/shared/PasscodeModal';
 
 // App Context
 import { useApp } from '@/contexts/AppContext';
+
+interface DashboardContainerProps {
+  currentUser: any;
+  handleLogout: () => void;
+  walletBalance: number;
+  notifications: any[];
+  setNotifications: any;
+  isNotificationOpen: boolean;
+  setIsNotificationOpen: any;
+  isCartOpen: boolean;
+  setIsCartOpen: any;
+  cart: any[];
+  children: React.ReactNode;
+}
+
+const DashboardContainer: React.FC<DashboardContainerProps> = ({
+  currentUser,
+  handleLogout,
+  walletBalance,
+  notifications,
+  setNotifications,
+  isNotificationOpen,
+  setIsNotificationOpen,
+  isCartOpen,
+  setIsCartOpen,
+  cart,
+  children,
+}) => {
+  const location = useLocation();
+  return (
+    <div className="dashboard-container">
+      {/* Sidebar Navigation */}
+      <Sidebar
+        userName={currentUser?.name || ''}
+        userRole={currentUser?.role || 'BUYER'}
+        onLogout={handleLogout}
+      />
+
+      {/* Main Panel */}
+      <main className="main-content">
+        {/* Header bar */}
+        <Header
+          walletBalance={walletBalance}
+          notifications={notifications}
+          setNotifications={setNotifications}
+          isNotificationOpen={isNotificationOpen}
+          setIsNotificationOpen={setIsNotificationOpen}
+          isCartOpen={isCartOpen}
+          setIsCartOpen={setIsCartOpen}
+          cart={cart}
+        />
+
+        {/* Dynamic Tab Router */}
+        <div
+          className="view-container"
+          key={location.pathname}
+          style={{ animation: 'modal-fadeIn 0.4s ease-out' }}
+        >
+          {children}
+        </div>
+      </main>
+    </div>
+  );
+};
 
 export default function App() {
   const {
@@ -109,6 +174,18 @@ export default function App() {
           }
         />
 
+        {/* Sign Up Page */}
+        <Route
+          path="/signup"
+          element={
+            !isAuthenticated ? (
+              <SignUpPage />
+            ) : (
+              <Navigate to="/catalog" replace />
+            )
+          }
+        />
+
         {/* Authenticated Dashboard Routes */}
         <Route
           path="*"
@@ -116,30 +193,18 @@ export default function App() {
             !isAuthenticated ? (
               <Navigate to="/" replace />
             ) : (
-              <div className="dashboard-container">
-                {/* Sidebar Navigation */}
-                <Sidebar
-                  userName={currentUser?.name || ''}
-                  userRole={currentUser?.role || 'BUYER'}
-                  onLogout={handleLogout}
-                />
-
-                {/* Main Panel */}
-                <main className="main-content">
-                  {/* Header bar */}
-                  <Header
-                    walletBalance={walletBalance}
-                    notifications={notifications}
-                    setNotifications={setNotifications}
-                    isNotificationOpen={isNotificationOpen}
-                    setIsNotificationOpen={setIsNotificationOpen}
-                    isCartOpen={isCartOpen}
-                    setIsCartOpen={setIsCartOpen}
-                    cart={cart}
-                  />
-
-                  {/* Dynamic Tab Router */}
-                  <div className="view-container">
+              <DashboardContainer
+                currentUser={currentUser}
+                handleLogout={handleLogout}
+                walletBalance={walletBalance}
+                notifications={notifications}
+                setNotifications={setNotifications}
+                isNotificationOpen={isNotificationOpen}
+                setIsNotificationOpen={setIsNotificationOpen}
+                isCartOpen={isCartOpen}
+                setIsCartOpen={setIsCartOpen}
+                cart={cart}
+              >
                     <Routes>
                       <Route
                         path="/catalog"
@@ -260,9 +325,7 @@ export default function App() {
                 )}
                       <Route path="*" element={<Navigate to="/catalog" replace />} />
                     </Routes>
-                  </div>
-                </main>
-              </div>
+              </DashboardContainer>
             )
           }
         />
