@@ -21,55 +21,137 @@ import { route } from '@/constants/routes';
 
 // Initial Mock Data
 const INITIAL_SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
+  // CUSTOMER PLANS (Loyalty Points / Cash VIP)
   {
-    id: 'plan-cust-freeship',
+    id: 'plan-cust-silver-points',
     type: 'CUSTOMER',
-    name: 'Customer VIP Freeship Pro',
-    price: 80000,
-    benefits: 'Miễn phí vận chuyển cho tất cả đơn hàng in ấn vật lý (Freeship 100% mọi đơn hàng)',
-    requiredPoints: 800,
-    isActive: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  },
-  {
-    id: 'plan-cust-design',
-    type: 'CUSTOMER',
-    name: 'Customer Design Saver Plus',
-    price: 150000,
-    benefits: 'Giảm giá sâu khi mua các tệp tin thiết kế 3D (Giảm 15% tất cả file 3D STL)',
-    requiredPoints: 1500,
-    isActive: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  },
-  {
-    id: 'plan-cust-cashback',
-    type: 'CUSTOMER',
-    name: 'Customer Cashback Saver',
-    price: 50000,
-    benefits: 'Hoàn lại điểm tích lũy sau mỗi lần thanh toán (Hoàn 5% đơn hàng thành điểm)',
+    name: 'Gói Bạc - Nâng Hạng Điểm',
+    price: 0,
+    benefits: 'Cung cấp 5 mã giảm giá cơ bản (Giảm 5% tối đa 5 đơn hàng/tháng)',
     requiredPoints: 500,
     isActive: true,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   },
   {
-    id: 'plan-maker-silver',
-    type: 'MAKER',
-    name: 'Maker Pro Silver Ads',
-    price: 300000,
-    benefits: 'Hỗ trợ đẩy tin quảng cáo lên trang chủ và tăng độ hiển thị bản in thêm +20%',
+    id: 'plan-cust-silver-cash',
+    type: 'CUSTOMER',
+    name: 'Gói Bạc - VIP Tiền Mặt',
+    price: 50000,
+    benefits: '[Mã giảm giá X2] Cấp 5 mã giảm giá X2 (Giảm 10% đơn hàng) + Freeship 2 đơn hàng/tháng',
+    requiredPoints: 0,
     isActive: true,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   },
   {
-    id: 'plan-maker-gold',
+    id: 'plan-cust-gold-points',
+    type: 'CUSTOMER',
+    name: 'Gói Vàng - Nâng Hạng Điểm',
+    price: 0,
+    benefits: 'Cung cấp 10 mã giảm giá cơ bản (Giảm 7% tối đa 10 đơn hàng/tháng)',
+    requiredPoints: 1200,
+    isActive: true,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: 'plan-cust-gold-cash',
+    type: 'CUSTOMER',
+    name: 'Gói Vàng - VIP Tiền Mặt',
+    price: 120000,
+    benefits: '[Mã giảm giá X2] Cấp 10 mã giảm giá X2 (Giảm 15% đơn hàng) + Freeship 5 đơn hàng/tháng + Giảm 10% phí in 3D',
+    requiredPoints: 0,
+    isActive: true,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: 'plan-cust-premium-points',
+    type: 'CUSTOMER',
+    name: 'Gói Bạch Kim - Nâng Hạng Điểm',
+    price: 0,
+    benefits: 'Cung cấp 20 mã giảm giá cơ bản (Giảm 10% tối đa 20 đơn hàng/tháng)',
+    requiredPoints: 2500,
+    isActive: true,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: 'plan-cust-premium-cash',
+    type: 'CUSTOMER',
+    name: 'Gói Bạch Kim - VIP Tiền Mặt',
+    price: 250000,
+    benefits: '[Mã giảm giá X2] Cấp 20 mã giảm giá X2 (Giảm 20% đơn hàng) + Miễn phí vận chuyển trọn đời + Giảm 20% phí in 3D',
+    requiredPoints: 0,
+    isActive: true,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+
+  // MAKER PLANS (Loyalty Points / Cash VIP)
+  {
+    id: 'plan-maker-silver-points',
     type: 'MAKER',
-    name: 'Maker VIP Gold Premium',
-    price: 600000,
-    benefits: 'Đặc quyền đẩy tin quảng cáo không giới hạn, giảm phí hoa hồng của sàn từ 5% xuống còn 2.5%',
+    name: 'Gói Bạc Maker - Nâng Hạng Điểm',
+    price: 0,
+    benefits: 'Hỗ trợ đẩy 5 tin quảng cáo cơ bản hiển thị trên trang chủ',
+    requiredPoints: 1000,
+    isActive: true,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: 'plan-maker-silver-cash',
+    type: 'MAKER',
+    name: 'Gói Bạc Maker - VIP Tiền Mặt',
+    price: 150000,
+    benefits: '[Mã giảm giá X2] Đẩy 10 tin nổi bật X2 hiển thị + Giảm phí hoa hồng sàn còn 4%',
+    requiredPoints: 0,
+    isActive: true,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: 'plan-maker-gold-points',
+    type: 'MAKER',
+    name: 'Gói Vàng Maker - Nâng Hạng Điểm',
+    price: 0,
+    benefits: 'Hỗ trợ đẩy 15 tin quảng cáo cơ bản hiển thị trên trang chủ',
+    requiredPoints: 2200,
+    isActive: true,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: 'plan-maker-gold-cash',
+    type: 'MAKER',
+    name: 'Gói Vàng Maker - VIP Tiền Mặt',
+    price: 350000,
+    benefits: '[Mã giảm giá X2] Đẩy 30 tin nổi bật X2 hiển thị + Giảm phí hoa hồng sàn còn 3%',
+    requiredPoints: 0,
+    isActive: true,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: 'plan-maker-premium-points',
+    type: 'MAKER',
+    name: 'Gói Bạch Kim Maker - Nâng Hạng Điểm',
+    price: 0,
+    benefits: 'Hỗ trợ đẩy 50 tin quảng cáo cơ bản hiển thị trên trang chủ',
+    requiredPoints: 4000,
+    isActive: true,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: 'plan-maker-premium-cash',
+    type: 'MAKER',
+    name: 'Gói Bạch Kim Maker - VIP Tiền Mặt',
+    price: 700000,
+    benefits: '[Mã giảm giá X2] Đẩy tin nổi bật KHÔNG GIỚI HẠN X2 hiển thị + Giảm phí hoa hồng sàn còn 2%',
+    requiredPoints: 0,
     isActive: true,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
@@ -89,8 +171,8 @@ const INITIAL_USER_SUBSCRIPTIONS: UserSubscription[] = [
     subscriptionId: 'sub-init-1',
     userId: 'user-buyer-1',
     username: 'Nguyễn Văn Anh',
-    planId: 'plan-cust-freeship',
-    planName: 'Customer VIP Freeship Pro',
+    planId: 'plan-cust-silver-cash',
+    planName: 'Gói Bạc - VIP Tiền Mặt',
     planType: 'CUSTOMER',
     startDate: new Date().toISOString().split('T')[0],
     endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
@@ -662,6 +744,44 @@ const INITIAL_DISPUTES: Dispute[] = [
       { sender: 'BUYER', text: 'File bị lỗi xoay không khớp trục.', date: '2026-06-16' },
       { sender: 'ADMIN', text: 'Admin đã phê duyệt phán quyết xử lý tranh chấp: Hoàn trả 100% số tiền (99.000đ) cho Người mua.', date: '2026-06-16' }
     ]
+  },
+  {
+    id: 'DISP-5521',
+    orderId: 'ORDER-7489',
+    reason: 'Maker in sai vật liệu yêu cầu. Tôi đặt hàng in nhựa chịu nhiệt PETG ngoài trời nhưng khi kiểm tra thì sản phẩm lại giòn gãy và mềm oặt dưới nắng (nhựa PLA thông thường).',
+    evidenceUrl: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?q=80&w=600&auto=format&fit=cover',
+    status: 'OPEN',
+    date: '2026-06-20',
+    messages: [
+      { sender: 'BUYER', text: 'Tôi đo nhiệt biến dạng rất thấp. Yêu cầu Maker chứng minh cuộn nhựa đã sử dụng.', date: '2026-06-20' },
+      { sender: 'MAKER', text: 'Tôi cam kết in đúng nhựa PETG Sunlu cao cấp. Vui lòng gửi bằng chứng đối chứng cụ thể hơn.', date: '2026-06-21' }
+    ]
+  },
+  {
+    id: 'DISP-8802',
+    orderId: 'ORDER-6192',
+    reason: 'Sản phẩm hoàn thiện có chất lượng bề mặt rất tệ, nhiều tơ nhựa thừa và vết rách sâu do gỡ support quá tay.',
+    evidenceUrl: 'https://images.unsplash.com/photo-1615840287214-7fe58a8b668f?q=80&w=600&auto=format&fit=cover',
+    status: 'OPEN',
+    date: '2026-06-22',
+    messages: [
+      { sender: 'BUYER', text: 'Nhìn nham nhở thế này tôi không làm quà tặng được. Đề nghị hoàn lại 50% số tiền đơn hàng.', date: '2026-06-22' }
+    ]
+  },
+  {
+    id: 'DISP-9912',
+    orderId: 'ORDER-5203',
+    reason: 'Maker giao hàng quá muộn (chậm trễ hơn 10 ngày so với hạn thỏa thuận ban đầu) làm lỡ tiến độ đồ án tốt nghiệp.',
+    evidenceUrl: 'https://images.unsplash.com/photo-1595428774223-ef52624120d2?q=80&w=600&auto=format&fit=cover',
+    status: 'RESOLVED',
+    date: '2026-06-15',
+    refundAmount: 49500,
+    refundType: 'PARTIAL',
+    messages: [
+      { sender: 'BUYER', text: 'Tôi đã phải tự in ở ngoài để kịp ngày chấm đồ án.', date: '2026-06-15' },
+      { sender: 'MAKER', text: 'Thành thật xin lỗi do máy in của tôi đột ngột hỏng bo mạch chính phải chờ nhập linh kiện thay thế.', date: '2026-06-15' },
+      { sender: 'ADMIN', text: 'Admin đã giải quyết: Hoàn trả 50% (49.500đ) hỗ trợ người mua, Maker được nhận 50% công sức in ấn.', date: '2026-06-16' }
+    ]
   }
 ];
 
@@ -710,7 +830,19 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   });
   const [disputes, setDisputes] = useState<Dispute[]>(() => {
     const saved = localStorage.getItem('printhub_disputes');
-    return saved ? JSON.parse(saved) : INITIAL_DISPUTES;
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed.length <= 2) {
+          localStorage.setItem('printhub_disputes', JSON.stringify(INITIAL_DISPUTES));
+          return INITIAL_DISPUTES;
+        }
+        return parsed;
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    return INITIAL_DISPUTES;
   });
   const [notifications, setNotifications] = useState<AppNotification[]>(() => {
     const saved = localStorage.getItem('printhub_notifications');
@@ -732,7 +864,21 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   });
   const [subscriptionPlans, setSubscriptionPlans] = useState<SubscriptionPlan[]>(() => {
     const saved = localStorage.getItem('printhub_subscription_plans');
-    return saved ? JSON.parse(saved) : INITIAL_SUBSCRIPTION_PLANS;
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        const hasOldPlans = parsed.some((p: any) => p.id === 'plan-cust-freeship' || p.id === 'plan-maker-silver');
+        if (hasOldPlans) {
+          localStorage.setItem('printhub_subscription_plans', JSON.stringify(INITIAL_SUBSCRIPTION_PLANS));
+          localStorage.setItem('printhub_user_subscriptions', JSON.stringify(INITIAL_USER_SUBSCRIPTIONS));
+          return INITIAL_SUBSCRIPTION_PLANS;
+        }
+        return parsed;
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    return INITIAL_SUBSCRIPTION_PLANS;
   });
   const [userSubscriptions, setUserSubscriptions] = useState<UserSubscription[]>(() => {
     const saved = localStorage.getItem('printhub_user_subscriptions');
@@ -1006,7 +1152,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           ]);
           setWalletBalance(b => b + makerNet);
         });
-        addNotification('ORDER', 'Tải xuống tệp 3D', `Đơn hàng số ${newOrder.id} đã hoàn tất. Bạn có thể tải xuống file thiết kế.`);
+
+        // Credit points to buyer (1 point per 1000đ spent)
+        const pointsEarned = Math.round(total / 1000);
+        setBuyerPoints(prev => prev + pointsEarned);
+
+        addNotification('ORDER', 'Tải xuống tệp 3D', `Đơn hàng số ${newOrder.id} đã hoàn tất. Bạn đã nhận được +${pointsEarned} điểm thưởng!`);
       } else {
         addNotification('ORDER', 'Đơn hàng mới tạo', `Đơn hàng ${newOrder.id} của bạn đã được tiếp nhận.`);
       }
@@ -1261,7 +1412,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     ]);
     setWalletBalance(b => b + net);
 
-    addNotification('ORDER', 'Nghiệm thu hoàn tất đơn in 3D', `Đơn in 3D mã ${orderId} đã hoàn tất và giao thành công.`);
+    // Credit loyalty points to buyer (1 point per 1000đ spent)
+    const pointsEarned = Math.round(price / 1000);
+    setBuyerPoints(prev => prev + pointsEarned);
+
+    addNotification('ORDER', 'Nghiệm thu hoàn tất đơn in 3D', `Đơn in 3D mã ${orderId} đã hoàn tất. Bạn đã nhận được +${pointsEarned} điểm thưởng!`);
   };
 
   const handleResolveDispute = (id: string, refundAmount: number, refundType: 'FULL' | 'PARTIAL' | 'NONE') => {
@@ -1334,7 +1489,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             ]);
             setWalletBalance(b => b + makerNet);
           });
-          addNotification('ORDER', 'Đơn hàng hoàn tất', `Đơn hàng ${orderId} đã giao thành công và hoàn tất.`);
+
+          // Credit loyalty points to buyer (1 point per 1000đ spent)
+          const pointsEarned = Math.round(order.totalAmount / 1000);
+          setBuyerPoints(prev => prev + pointsEarned);
+
+          addNotification('ORDER', 'Đơn hàng hoàn tất', `Đơn hàng ${orderId} đã giao thành công và hoàn tất. Bạn được tích lũy +${pointsEarned} điểm thưởng!`);
         } else if (status === 'SHIPPED') {
           addNotification('ORDER', 'Đơn hàng đã giao', `Đơn hàng ${orderId} đã được bàn giao cho đơn vị vận chuyển.`);
         } else if (status === 'PROCESSING') {
