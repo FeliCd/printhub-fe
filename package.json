@@ -8,6 +8,9 @@
     "lint": "npm run lint --prefix vite-project",
     "preview": "npm run preview --prefix vite-project"
   },
+  "workspaces": [
+    "vite-project"
+  ],
   "devDependencies": {
     "autoprefixer": "^10.5.2",
     "postcss": "^8.5.15",
