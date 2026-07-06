@@ -21,12 +21,6 @@ export const makerMenuRoutes: RouteConfig[] = [
     allowedRoles: ['MAKER']
   },
   {
-    path: '/orders',
-    label: 'Đơn hàng đã mua',
-    icon: <ShoppingBag size={18} />,
-    allowedRoles: ['MAKER']
-  },
-  {
     path: '/wallet',
     label: 'Ví điện tử',
     icon: <Wallet size={18} />,

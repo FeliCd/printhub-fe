@@ -17,7 +17,7 @@ export const CartPage: React.FC = () => {
   const [showPayOS, setShowPayOS] = useState(false);
   const [usePoints, setUsePoints] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [methodToConfirm, setMethodToConfirm] = useState<'PAYOS' | 'BANK_TRANSFER' | null>(null);
+  const [methodToConfirm, setMethodToConfirm] = useState<'PAYOS' | 'COD' | null>(null);
 
   const subtotal = useMemo(() => cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0), [cart]);
   
@@ -34,13 +34,11 @@ export const CartPage: React.FC = () => {
   const subDiscount = Math.round(subtotal * discountPercentage);
   let totalAfterSub = subtotal - subDiscount;
   
-  // Apply points
+  // Apply points (1 point = 1 VND discount)
   let pointsDiscount = 0;
   if (usePoints) {
-    // 1 point = 1000 VND discount
-    const maxPointsUsable = Math.floor(totalAfterSub / 1000);
-    const pointsToUse = Math.min(buyerPoints, maxPointsUsable);
-    pointsDiscount = pointsToUse * 1000;
+    const pointsToUse = Math.min(buyerPoints, totalAfterSub);
+    pointsDiscount = pointsToUse;
   }
 
   const finalTotal = totalAfterSub - pointsDiscount;
@@ -155,7 +153,7 @@ export const CartPage: React.FC = () => {
                   />
                   <span style={{ fontSize: '14px' }}>
                     Dùng điểm thưởng <br/>
-                    <small style={{ color: 'var(--text-secondary)' }}>Bạn có {buyerPoints.toLocaleString()} điểm (Tương đương {(buyerPoints * 1000).toLocaleString()}đ)</small>
+                    <small style={{ color: 'var(--text-secondary)' }}>Bạn có {buyerPoints.toLocaleString()} điểm (Tương đương {buyerPoints.toLocaleString()}đ)</small>
                   </span>
                 </label>
               </div>
@@ -187,15 +185,15 @@ export const CartPage: React.FC = () => {
             >
               Thanh toán qua PayOS
             </button>
-            <button
+             <button
               className="btn btn-secondary"
               style={{ width: '100%', padding: '16px', fontSize: '16px' }}
               onClick={() => {
-                setMethodToConfirm('BANK_TRANSFER');
+                setMethodToConfirm('COD');
                 setShowConfirm(true);
               }}
             >
-              Chuyển khoản (VNPay)
+              Thanh toán khi nhận hàng (COD)
             </button>
 
             <div style={{ marginTop: '24px', fontSize: '13px', color: 'var(--text-muted)', display: 'flex', gap: '8px' }}>
@@ -213,7 +211,7 @@ export const CartPage: React.FC = () => {
           amount={finalTotal}
           onSuccess={() => {
             setShowPayOS(false);
-            if (usePoints && pointsDiscount > 0) setBuyerPoints(prev => prev - (pointsDiscount/1000));
+            if (usePoints && pointsDiscount > 0) setBuyerPoints(prev => prev - pointsDiscount);
             handleCheckout('PAYOS');
           }}
           onCancel={() => setShowPayOS(false)}
@@ -225,8 +223,18 @@ export const CartPage: React.FC = () => {
           <div className="modal-content" style={{ maxWidth: '400px', padding: '32px', textAlign: 'center' }}>
             <h3 style={{ marginBottom: '16px', color: '#ff3b30' }}>⚠️ Cảnh báo thanh toán</h3>
             <p style={{ fontSize: '14px', color: 'var(--text-secondary)', lineHeight: '1.6', marginBottom: '24px' }}>
-              Bạn đang thực hiện đặt hàng và thanh toán số tiền <strong>{finalTotal.toLocaleString()}đ</strong>. <br/><br/>
-              Vui lòng xác nhận rằng thông tin đơn hàng và địa chỉ giao nhận của bạn đã chính xác. Sau khi xác nhận, bạn sẽ chuyển sang cổng thanh toán.
+              {methodToConfirm === 'COD' ? (
+                <span>
+                  Bạn đang thực hiện đặt hàng với hình thức <strong>Thanh toán khi nhận hàng (COD)</strong>. <br/>
+                  Tổng số tiền cần thanh toán khi nhận hàng: <strong>{finalTotal.toLocaleString()}đ</strong>. <br/><br/>
+                  Vui lòng xác nhận rằng thông tin đơn hàng và địa chỉ giao nhận của bạn đã chính xác.
+                </span>
+              ) : (
+                <span>
+                  Bạn đang thực hiện đặt hàng và thanh toán số tiền <strong>{finalTotal.toLocaleString()}đ</strong> qua cổng PayOS. <br/><br/>
+                  Vui lòng xác nhận rằng thông tin đơn hàng và địa chỉ giao nhận của bạn đã chính xác. Sau khi xác nhận, bạn sẽ chuyển sang cổng thanh toán PayOS.
+                </span>
+              )}
             </p>
             <div style={{ display: 'flex', gap: '12px' }}>
               <button 
@@ -246,9 +254,9 @@ export const CartPage: React.FC = () => {
                   setShowConfirm(false);
                   if (methodToConfirm === 'PAYOS') {
                     setShowPayOS(true);
-                  } else if (methodToConfirm === 'BANK_TRANSFER') {
-                    if (usePoints && pointsDiscount > 0) setBuyerPoints(prev => prev - (pointsDiscount/1000));
-                    handleCheckout('BANK_TRANSFER');
+                  } else if (methodToConfirm === 'COD') {
+                    if (usePoints && pointsDiscount > 0) setBuyerPoints(prev => prev - pointsDiscount);
+                    handleCheckout('COD');
                   }
                   setMethodToConfirm(null);
                 }}

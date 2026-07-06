@@ -249,6 +249,28 @@ export const AdminSubscriptionsPage: React.FC = () => {
                   </option>
                 ))}
               </select>
+
+              {/* Display owned packages if a user is selected */}
+              {giftForm.userId && (
+                <div style={{ 
+                  marginTop: '8px', 
+                  padding: '8px 12px', 
+                  backgroundColor: 'rgba(255, 255, 255, 0.05)', 
+                  borderRadius: '6px', 
+                  fontSize: '12px',
+                  border: '1px solid var(--border)'
+                }}>
+                  <span style={{ color: 'var(--text-secondary)' }}>Gói hiện có của thành viên: </span>
+                  <strong style={{ color: 'var(--primary)' }}>
+                    {(() => {
+                      const activeSubs = userSubscriptions.filter(us => us.userId === giftForm.userId && us.isActive);
+                      return activeSubs.length > 0 
+                        ? activeSubs.map(us => us.planName).join(', ') 
+                        : 'Chưa sở hữu gói nào';
+                    })()}
+                  </strong>
+                </div>
+              )}
             </div>
 
             {/* Target Plan select */}

@@ -627,10 +627,10 @@ interface AppContextType {
   handleTopup: () => void;
   handleOpenDispute: (data: { orderId: string; reason: string; evidenceUrl: string }) => void;
   handleMakerPickRequest: (orderId: string) => void;
-  handleMakerQuote: (orderId: string, price: number) => void;
+  handleMakerQuote: (orderId: string, price: number, depositPercentage: number) => void;
   handleMakerSendMessage: (orderId: string, text: string) => void;
   handleBuyerSendMessage: (orderId: string, text: string) => void;
-  handleBuyerAcceptQuote: (orderId: string) => void;
+  handleBuyerAcceptQuote: (orderId: string, paymentType: 'DEPOSIT' | 'FULL') => void;
   handleMakerUploadProof: (orderId: string, img: string, note: string) => void;
   handleBuyerCompleteCustom: (orderId: string) => void;
   handleResolveDispute: (id: string, refundAmount: number, refundType: 'FULL' | 'PARTIAL' | 'NONE') => void;
@@ -1343,33 +1343,62 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     addNotification('DISPUTE', 'Khiếu nại được tạo', `Đơn khiếu nại ${newDispute.id} cho đơn hàng ${newDispute.orderId} đã được mở.`);
   };
 
-  const handleMakerQuote = (orderId: string, price: number) => {
+  const handleMakerQuote = (orderId: string, price: number, depositPercentage: number) => {
+    const depositAmount = Math.round(price * depositPercentage / 100);
     setCustomOrders(prev => prev.map(o =>
       o.id === orderId
         ? {
           ...o,
           quotedPrice: price,
+          depositPercentage,
+          depositAmount,
           status: 'QUOTED' as const,
           messages: [
             ...(o.messages || []),
-            { sender: 'DragonCreator3D', text: `Tôi đã gửi báo giá ${price.toLocaleString()}đ cho yêu cầu này. Vui lòng xem xét và xác nhận.`, date: new Date().toISOString().split('T')[0] }
+            { sender: 'DragonCreator3D', text: `Tôi đã gửi báo giá ${price.toLocaleString()}đ cho yêu cầu này (Yêu cầu cọc ${depositPercentage}% - tương đương ${depositAmount.toLocaleString()}đ). Vui lòng xem xét và xác nhận.`, date: new Date().toISOString().split('T')[0] }
           ]
         }
         : o
     ));
-    addNotification('ORDER', 'Nhận báo giá in 3D', `Nhà in đã gửi báo giá ${price.toLocaleString()}đ cho yêu cầu ${orderId}.`);
+    addNotification('ORDER', 'Nhận báo giá in 3D', `Nhà in đã gửi báo giá ${price.toLocaleString()}đ (cọc ${depositPercentage}%) cho yêu cầu ${orderId}.`);
   };
 
-  const handleBuyerAcceptQuote = (orderId: string) => {
+  const handleBuyerAcceptQuote = (orderId: string, paymentType: 'DEPOSIT' | 'FULL') => {
     const order = customOrders.find(o => o.id === orderId);
     if (!order) return;
     const price = order.quotedPrice || 0;
+    const amountPaid = paymentType === 'DEPOSIT' ? (order.depositAmount || 0) : price;
 
-    if (confirm(`Bạn xác nhận thanh toán số tiền ${price.toLocaleString()}đ cho báo giá in 3D thiết kế mã ${orderId} qua Chuyển khoản / VNPay?`)) {
-      setCustomOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: 'ACCEPTED' as const } : o));
-      addNotification('ORDER', 'Chấp nhận báo giá & Thanh toán', `Bạn đã đồng ý thiết kế in mã ${orderId} và thanh toán ${price.toLocaleString()}đ.`);
-      alert(`Chấp nhận báo giá và thanh toán thành công cho đơn ${orderId}!`);
+    if (walletBalance < amountPaid) {
+      alert('Số dư ví điện tử không đủ! Vui lòng nạp thêm tiền.');
+      return;
     }
+
+    setCustomOrders(prev => prev.map(o => 
+      o.id === orderId 
+        ? { 
+            ...o, 
+            status: 'ACCEPTED' as const, 
+            paymentType 
+          } 
+        : o
+    ));
+
+    // Deduct amountPaid from Buyer wallet balance
+    setWalletBalance(prev => prev - amountPaid);
+    setWalletTransactions(prev => [
+      {
+        id: `TX-CUST-PAY-${Date.now()}`,
+        type: 'DEBIT',
+        amount: amountPaid,
+        description: `Thanh toán ${paymentType === 'DEPOSIT' ? 'tiền cọc' : 'trước 100%'} đơn in Custom ${orderId}`,
+        date: new Date().toISOString().split('T')[0]
+      },
+      ...prev
+    ]);
+
+    addNotification('ORDER', 'Thanh toán đơn in 3D thành công', `Bạn đã đồng ý thiết kế in mã ${orderId} và thanh toán ${paymentType === 'DEPOSIT' ? 'tiền cọc' : 'toàn bộ'} số tiền ${amountPaid.toLocaleString()}đ.`);
+    alert(`Chấp nhận báo giá và thanh toán thành công cho đơn ${orderId}!`);
   };
 
   const handleMakerUploadProof = (orderId: string, img: string, note: string) => {
@@ -1381,11 +1410,33 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const order = customOrders.find(o => o.id === orderId);
     if (!order) return;
     const price = order.quotedPrice || 0;
-    const net = Math.round(price * 0.95);
+    const deposit = order.depositAmount || 0;
+    const isDeposit = order.paymentType === 'DEPOSIT';
+    const remaining = price - deposit;
 
+    // If buyer chose deposit, charge the remaining amount upon final completion/acceptance
+    if (isDeposit && remaining > 0) {
+      if (walletBalance < remaining) {
+        alert(`Số dư ví của bạn không đủ để thanh toán số tiền còn lại (${remaining.toLocaleString()}đ). Vui lòng nạp thêm ví trước khi nghiệm thu!`);
+        return;
+      }
+      setWalletBalance(b => b - remaining);
+      setWalletTransactions(prev => [
+        {
+          id: `TX-CUST-FINAL-${Date.now()}`,
+          type: 'DEBIT',
+          amount: remaining,
+          description: `Thanh toán nốt phần còn lại của đơn in Custom ${orderId} khi nghiệm thu`,
+          date: new Date().toISOString().split('T')[0]
+        },
+        ...prev
+      ]);
+    }
+
+    const net = Math.round(price * 0.95);
     setCustomOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: 'COMPLETED' as const } : o));
 
-    // Credit the maker
+    // Credit the maker (total net earnings)
     setWalletTransactions(prev => [
       {
         id: `TX-CUST-${Date.now()}`,

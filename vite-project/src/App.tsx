@@ -258,7 +258,6 @@ export default function App() {
                         onMakerQuote={handleMakerQuote}
                         onMakerSendMessage={handleMakerSendMessage}
                         onMakerUploadProof={handleMakerUploadProof}
-                        onUpdateOrderStatus={handleUpdateOrderStatus}
                       />
                     }
                   />
@@ -333,7 +332,15 @@ export default function App() {
                 {isAllowed('/orders') && (
                   <Route
                     path="/orders"
-                    element={<OrdersPage orders={orders} />}
+                    element={
+                      <OrdersPage
+                        orders={orders}
+                        customOrders={customOrders}
+                        onBuyerAcceptQuote={handleBuyerAcceptQuote}
+                        onBuyerCompleteCustom={handleBuyerCompleteCustom}
+                        onBuyerSendMessage={handleBuyerSendMessage}
+                      />
+                    }
                   />
                 )}
                 {isAllowed('/maker/orders-status') && (

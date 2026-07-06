@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { Plus, Send } from 'lucide-react';
+import { Plus, Send, AlertTriangle } from 'lucide-react';
 import type { CustomOrder } from '@/types';
+import { PayOSMockModal } from '@/components/shared/PayOSMockModal';
 
 interface CustomOrdersPageProps {
   customOrders: CustomOrder[];
   onAddRequestClick: () => void;
-  onBuyerAcceptQuote: (orderId: string) => void;
+  onBuyerAcceptQuote: (orderId: string, paymentType: 'DEPOSIT' | 'FULL') => void;
   onBuyerCompleteCustom: (orderId: string) => void;
   onBuyerSendMessage: (orderId: string, text: string) => void;
 }
@@ -35,6 +36,14 @@ export const CustomOrdersPage: React.FC<CustomOrdersPageProps> = ({
   onBuyerSendMessage,
 }) => {
   const [chatInputs, setChatInputs] = useState<Record<string, string>>({});
+
+  // Custom Payment States
+  const [selectedQuoteOrder, setSelectedQuoteOrder] = useState<string>('');
+  const [showPayOS, setShowPayOS] = useState<boolean>(false);
+  const [payOSAmount, setPayOSAmount] = useState<number>(0);
+  const [paymentTypeToProcess, setPaymentTypeToProcess] = useState<'DEPOSIT' | 'FULL' | null>(null);
+  const [orderIdToProcess, setOrderIdToProcess] = useState<string>('');
+  const [showConfirmWarning, setShowConfirmWarning] = useState<boolean>(false);
 
   const handleSendChat = (orderId: string) => {
     const text = chatInputs[orderId]?.trim();
@@ -132,11 +141,21 @@ export const CustomOrdersPage: React.FC<CustomOrdersPageProps> = ({
                     {/* Quote & Actions */}
                     <div className="request-card-actions">
                       {co.quotedPrice ? (
-                        <div style={{ fontSize: '14px', marginBottom: '8px' }}>
-                          Báo giá:{' '}
-                          <strong style={{ color: 'var(--primary)', fontSize: '20px', fontFamily: 'var(--mono)' }}>
-                            {co.quotedPrice.toLocaleString()}đ
-                          </strong>
+                        <div style={{ fontSize: '14px', marginBottom: '8px', lineHeight: '1.5' }}>
+                          <div>
+                            Báo giá:{' '}
+                            <strong style={{ color: 'var(--primary)', fontSize: '20px', fontFamily: 'var(--mono)' }}>
+                              {co.quotedPrice.toLocaleString()}đ
+                            </strong>
+                          </div>
+                          {co.depositPercentage && co.depositAmount && (
+                            <div style={{ fontSize: '12.5px', color: 'var(--text-secondary)' }}>
+                              • Yêu cầu cọc: <strong>{co.depositPercentage}%</strong> (tương đương <strong>{co.depositAmount.toLocaleString()}đ</strong>)
+                              {co.paymentType && (
+                                <span> | Đã chọn: <strong style={{ color: 'var(--primary)' }}>{co.paymentType === 'DEPOSIT' ? 'Thanh toán cọc' : 'Thanh toán 100%'}</strong></span>
+                              )}
+                            </div>
+                          )}
                         </div>
                       ) : co.status === 'REQUESTED' ? (
                         <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontStyle: 'italic' }}>
@@ -149,9 +168,48 @@ export const CustomOrdersPage: React.FC<CustomOrdersPageProps> = ({
                       ) : null}
 
                       {co.status === 'QUOTED' && (
-                        <button className="btn btn-primary" onClick={() => onBuyerAcceptQuote(co.id)}>
-                          Chấp nhận & Thanh toán
-                        </button>
+                        selectedQuoteOrder !== co.id ? (
+                          <button className="btn btn-primary" onClick={() => setSelectedQuoteOrder(co.id)}>
+                            Chấp nhận báo giá
+                          </button>
+                        ) : (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'flex-end' }}>
+                            <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Chọn hình thức thanh toán bắt buộc cọc trước:</div>
+                            <div style={{ display: 'flex', gap: '8px' }}>
+                              <button
+                                className="btn btn-primary"
+                                style={{ padding: '6px 12px', fontSize: '11px', backgroundColor: 'var(--primary)', color: '#000', borderColor: 'var(--primary)' }}
+                                onClick={() => {
+                                  setOrderIdToProcess(co.id);
+                                  setPaymentTypeToProcess('DEPOSIT');
+                                  setPayOSAmount(co.depositAmount || 0);
+                                  setShowConfirmWarning(true);
+                                }}
+                              >
+                                Cọc trước {co.depositPercentage}% ({co.depositAmount?.toLocaleString()}đ)
+                              </button>
+                              <button
+                                className="btn btn-secondary"
+                                style={{ padding: '6px 12px', fontSize: '11px' }}
+                                onClick={() => {
+                                  setOrderIdToProcess(co.id);
+                                  setPaymentTypeToProcess('FULL');
+                                  setPayOSAmount(co.quotedPrice || 0);
+                                  setShowConfirmWarning(true);
+                                }}
+                              >
+                                Thanh toán 100% ({co.quotedPrice?.toLocaleString()}đ)
+                              </button>
+                              <button
+                                className="btn"
+                                style={{ padding: '6px 10px', fontSize: '11px', color: '#ff3b30', background: 'none', border: 'none' }}
+                                onClick={() => setSelectedQuoteOrder('')}
+                              >
+                                Hủy
+                              </button>
+                            </div>
+                          </div>
+                        )
                       )}
 
                       {/* Print Proof */}
@@ -220,6 +278,67 @@ export const CustomOrdersPage: React.FC<CustomOrdersPageProps> = ({
           )}
         </div>
       </div>
+
+      {/* PayOS Mock Modal */}
+      {showPayOS && (
+        <PayOSMockModal
+          amount={payOSAmount}
+          onSuccess={() => {
+            setShowPayOS(false);
+            if (onBuyerAcceptQuote && orderIdToProcess && paymentTypeToProcess) {
+              onBuyerAcceptQuote(orderIdToProcess, paymentTypeToProcess);
+            }
+            setSelectedQuoteOrder('');
+            setPaymentTypeToProcess(null);
+            setOrderIdToProcess('');
+          }}
+          onCancel={() => {
+            setShowPayOS(false);
+            setPaymentTypeToProcess(null);
+            setOrderIdToProcess('');
+          }}
+        />
+      )}
+
+      {/* Warning confirmation modal */}
+      {showConfirmWarning && (
+        <div className="modal-overlay" style={{ zIndex: 1100 }}>
+          <div className="modal-content" style={{ maxWidth: '400px', padding: '32px', textAlign: 'center' }}>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px', color: '#ff9f0a' }}>
+              <AlertTriangle size={48} />
+            </div>
+            <h3 style={{ marginBottom: '12px', color: '#ff9f0a' }}>Xác nhận thanh toán đơn in Custom</h3>
+            <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.6', marginBottom: '24px' }}>
+              Bạn đang thực hiện thanh toán **{paymentTypeToProcess === 'DEPOSIT' ? 'Tiền cọc' : '100% giá trị'}** đơn hàng in theo yêu cầu. <br/>
+              Số tiền giao dịch: <strong style={{ color: 'var(--primary)', fontSize: '16px', fontFamily: 'var(--mono)' }}>{payOSAmount.toLocaleString()}đ</strong>.<br/><br/>
+              *Lưu ý: Đối với đơn in Custom, sau khi chấp nhận thanh toán, Maker sẽ bắt đầu thực hiện in. Số tiền cọc sẽ không được hoàn trả nếu bạn hủy đơn vô lý.*
+            </p>
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button 
+                className="btn btn-secondary" 
+                style={{ flex: 1 }} 
+                onClick={() => {
+                  setShowConfirmWarning(false);
+                  setPaymentTypeToProcess(null);
+                  setOrderIdToProcess('');
+                }}
+              >
+                Hủy bỏ
+              </button>
+              <button 
+                className="btn btn-primary" 
+                style={{ flex: 1, backgroundColor: '#ff9f0a', borderColor: '#ff9f0a', color: '#000' }} 
+                onClick={() => {
+                  setShowConfirmWarning(false);
+                  setShowPayOS(true);
+                }}
+              >
+                Xác nhận
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

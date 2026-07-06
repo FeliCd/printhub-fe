@@ -2,17 +2,15 @@ import React, { useState } from 'react';
 import type { CustomOrder, Order } from '@/types';
 import { OpenRequestsList } from '@/components/maker/OpenRequestsList';
 import { PickedOrdersList } from '@/components/maker/PickedOrdersList';
-import { CatalogOrdersList } from '@/components/maker/CatalogOrdersList';
 import { EarningsDashboard } from '@/components/maker/EarningsDashboard';
 
 interface PrintRequestsPageProps {
   customOrders: CustomOrder[];
   orders: Order[];
   onMakerPickRequest: (orderId: string) => void;
-  onMakerQuote: (orderId: string, price: number) => void;
+  onMakerQuote: (orderId: string, price: number, depositPercentage: number) => void;
   onMakerSendMessage: (orderId: string, text: string) => void;
   onMakerUploadProof: (orderId: string, img: string, note: string) => void;
-  onUpdateOrderStatus: (orderId: string, status: Order['status'], trackingNumber?: string) => void;
 }
 
 export const PrintRequestsPage: React.FC<PrintRequestsPageProps> = ({
@@ -22,15 +20,11 @@ export const PrintRequestsPage: React.FC<PrintRequestsPageProps> = ({
   onMakerQuote,
   onMakerSendMessage,
   onMakerUploadProof,
-  onUpdateOrderStatus,
 }) => {
-  const [activeTab, setActiveTab] = useState<'OPEN' | 'MINE' | 'CATALOG' | 'EARNINGS'>('OPEN');
+  const [activeTab, setActiveTab] = useState<'OPEN' | 'MINE' | 'EARNINGS'>('OPEN');
 
   const openRequests = customOrders.filter(o => o.status === 'REQUESTED');
   const myOrders = customOrders.filter(o => o.makerId === 101 && o.status !== 'REQUESTED');
-  
-  // Physical catalog orders
-  const physicalCatalogOrders = orders.filter(o => o.items.some(item => item.product.type === 'PHYSICAL'));
 
   // Maker Earnings calculations (Gross, Fee, Net)
   const completedCustoms = customOrders.filter(o => o.makerId === 101 && o.status === 'COMPLETED');
@@ -48,7 +42,7 @@ export const PrintRequestsPage: React.FC<PrintRequestsPageProps> = ({
     <div>
       <div style={{ marginBottom: '24px' }}>
         <h1 className="page-title">Bảng điều khiển Nhà in (Maker Dashboard)</h1>
-        <p className="page-subtitle">Nhận đơn hàng in riêng, xử lý đơn đặt mua từ Catalog, và thống kê thu nhập</p>
+        <p className="page-subtitle">Nhận đơn hàng in riêng, thảo luận cùng khách hàng và thống kê thu nhập</p>
       </div>
 
       {/* Maker Info Banner */}
@@ -71,11 +65,6 @@ export const PrintRequestsPage: React.FC<PrintRequestsPageProps> = ({
             Quản lý các yêu cầu đặt in bạn đã nhận. Tiến hành thảo luận {"→"} báo giá {"→"} thực hiện in ấn {"→"} tải ảnh nghiệm thu.
           </div>
         )}
-        {activeTab === 'CATALOG' && (
-          <div>
-            Đơn hàng đặt mua mô hình vật lý in sẵn từ Catalog của bạn. Hãy in, đóng gói và cập nhật tiến trình giao nhận hàng.
-          </div>
-        )}
         {activeTab === 'EARNINGS' && (
           <div>
             Thống kê tài chính. Thu nhập thực tế nhận về ví sau khi sàn tự động khấu trừ 5% phí hoa hồng trọng tài.
@@ -96,12 +85,6 @@ export const PrintRequestsPage: React.FC<PrintRequestsPageProps> = ({
           onClick={() => setActiveTab('MINE')}
         >
           Đơn thiết kế đã nhận ({myOrders.length})
-        </button>
-        <button
-          className={`tab-btn ${activeTab === 'CATALOG' ? 'active' : ''}`}
-          onClick={() => setActiveTab('CATALOG')}
-        >
-          Đơn bán từ Catalog ({physicalCatalogOrders.length})
         </button>
         <button
           className={`tab-btn ${activeTab === 'EARNINGS' ? 'active' : ''}`}
@@ -129,15 +112,7 @@ export const PrintRequestsPage: React.FC<PrintRequestsPageProps> = ({
         />
       )}
 
-      {/* TAB 3: Catalog Sales Order Management */}
-      {activeTab === 'CATALOG' && (
-        <CatalogOrdersList
-          physicalCatalogOrders={physicalCatalogOrders}
-          onUpdateOrderStatus={onUpdateOrderStatus}
-        />
-      )}
-
-      {/* TAB 4: Earnings Dashboard */}
+      {/* TAB 3: Earnings Dashboard */}
       {activeTab === 'EARNINGS' && (
         <EarningsDashboard
           grossEarnings={grossEarnings}

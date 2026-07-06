@@ -73,6 +73,9 @@ export interface CustomOrder {
   finish?: string;
   priority?: string;
   sizeScale?: string;
+  depositPercentage?: number;
+  depositAmount?: number;
+  paymentType?: 'DEPOSIT' | 'FULL';
 }
 
 export interface WalletTransaction {

@@ -4,7 +4,7 @@ import type { CustomOrder } from '@/types';
 
 interface PickedOrdersListProps {
   myOrders: CustomOrder[];
-  onMakerQuote: (orderId: string, price: number) => void;
+  onMakerQuote: (orderId: string, price: number, depositPercentage: number) => void;
   onMakerUploadProof: (orderId: string, img: string, note: string) => void;
   onMakerSendMessage: (orderId: string, text: string) => void;
 }
@@ -26,6 +26,7 @@ export const PickedOrdersList: React.FC<PickedOrdersListProps> = ({
 }) => {
   const [chatInputs, setChatInputs] = useState<Record<string, string>>({});
   const [quoteInputs, setQuoteInputs] = useState<Record<string, string>>({});
+  const [depositInputs, setDepositInputs] = useState<Record<string, string>>({});
 
   const handleSendChat = (orderId: string) => {
     const text = chatInputs[orderId]?.trim();
@@ -37,8 +38,14 @@ export const PickedOrdersList: React.FC<PickedOrdersListProps> = ({
   const handleSubmitQuote = (orderId: string) => {
     const price = parseInt(quoteInputs[orderId]);
     if (!price || price <= 0) return;
-    onMakerQuote(orderId, price);
+    const depPercent = parseInt(depositInputs[orderId]) || 30;
+    if (depPercent < 10 || depPercent > 100) {
+      alert('Tỷ lệ đặt cọc tối thiểu là 10% và tối đa là 100%');
+      return;
+    }
+    onMakerQuote(orderId, price, depPercent);
     setQuoteInputs(prev => ({ ...prev, [orderId]: '' }));
+    setDepositInputs(prev => ({ ...prev, [orderId]: '' }));
   };
 
   return (
@@ -97,32 +104,67 @@ export const PickedOrdersList: React.FC<PickedOrdersListProps> = ({
                   </div>
 
                   {co.quotedPrice && (
-                    <div style={{ marginTop: '12px', fontSize: '14px' }}>
-                      Báo giá đã gửi:{' '}
-                      <strong style={{ color: 'var(--primary)', fontSize: '18px', fontFamily: 'var(--mono)' }}>
-                        {co.quotedPrice.toLocaleString()}đ
-                      </strong>
+                    <div style={{ marginTop: '12px', fontSize: '14px', lineHeight: '1.6' }}>
+                      <div>
+                        Báo giá đã gửi:{' '}
+                        <strong style={{ color: 'var(--primary)', fontSize: '18px', fontFamily: 'var(--mono)' }}>
+                          {co.quotedPrice.toLocaleString()}đ
+                        </strong>
+                      </div>
+                      {co.depositPercentage && co.depositAmount && (
+                        <div style={{ fontSize: '12.5px', color: 'var(--text-secondary)' }}>
+                          • Yêu cầu cọc: <strong>{co.depositPercentage}%</strong> (tương đương <strong>{co.depositAmount.toLocaleString()}đ</strong>)
+                          {co.paymentType && (
+                            <span> | Khách đã chọn: <strong style={{ color: 'var(--primary)' }}>{co.paymentType === 'DEPOSIT' ? 'Thanh toán cọc' : 'Thanh toán 100%'}</strong></span>
+                          )}
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
-
+ 
                 {/* Actions */}
                 <div className="request-card-actions">
                   {co.status === 'PICKED' && (
-                    <div className="quote-input-inline">
-                      <div style={{ fontSize: '13px', fontWeight: '600', marginBottom: '8px' }}>Gửi báo giá:</div>
-                      <div style={{ display: 'flex', gap: '8px' }}>
-                        <input
-                          type="number"
-                          className="form-control"
-                          placeholder="Nhập giá (VND)..."
-                          value={quoteInputs[co.id] || ''}
-                          onChange={(e) => setQuoteInputs(prev => ({ ...prev, [co.id]: e.target.value }))}
-                          style={{ flex: 1 }}
-                        />
+                    <div className="quote-input-inline" style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      <div style={{ fontSize: '13px', fontWeight: '600' }}>Gửi báo giá & Yêu cầu cọc:</div>
+                      
+                      <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                        <div style={{ flex: 2, minWidth: '150px' }}>
+                          <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Tổng báo giá (VND):</span>
+                          <input
+                            type="number"
+                            className="form-control"
+                            placeholder="Nhập giá (VND)..."
+                            value={quoteInputs[co.id] || ''}
+                            onChange={(e) => setQuoteInputs(prev => ({ ...prev, [co.id]: e.target.value }))}
+                            style={{ width: '100%', marginTop: '4px' }}
+                          />
+                        </div>
+                        <div style={{ flex: 1, minWidth: '100px' }}>
+                          <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Tỷ lệ cọc (%):</span>
+                          <input
+                            type="number"
+                            className="form-control"
+                            placeholder="30"
+                            value={depositInputs[co.id] || ''}
+                            onChange={(e) => setDepositInputs(prev => ({ ...prev, [co.id]: e.target.value }))}
+                            style={{ width: '100%', marginTop: '4px' }}
+                          />
+                        </div>
+                      </div>
+ 
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px' }}>
+                        <div style={{ fontSize: '12px', color: 'var(--primary)' }}>
+                          {quoteInputs[co.id] && (
+                            <span>
+                              Cọc dự kiến: <strong>{depositInputs[co.id] || '30'}%</strong> (tương đương <strong>{(Math.round(parseInt(quoteInputs[co.id]) * (parseInt(depositInputs[co.id]) || 30) / 100)).toLocaleString()}đ</strong>)
+                            </span>
+                          )}
+                        </div>
                         <button
                           className="btn btn-primary"
-                          style={{ padding: '8px 16px', whiteSpace: 'nowrap' }}
+                          style={{ padding: '8px 24px', alignSelf: 'flex-end' }}
                           onClick={() => handleSubmitQuote(co.id)}
                         >
                           Gửi báo giá
