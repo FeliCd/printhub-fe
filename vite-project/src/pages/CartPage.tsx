@@ -41,7 +41,8 @@ export const CartPage: React.FC = () => {
     pointsDiscount = pointsToUse;
   }
 
-  const finalTotal = totalAfterSub - pointsDiscount;
+  const shippingFee = activeSub ? 0 : 30000;
+  const finalTotal = Math.max(0, totalAfterSub + shippingFee - pointsDiscount);
 
   if (cart.length === 0) {
     return (
@@ -142,6 +143,11 @@ export const CartPage: React.FC = () => {
               </div>
             )}
 
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px', color: 'var(--text-secondary)' }}>
+              <span>Phí vận chuyển:</span>
+              <span>{shippingFee === 0 ? <span style={{ color: '#34c759' }}>Miễn phí (VIP)</span> : `${shippingFee.toLocaleString()}đ`}</span>
+            </div>
+
             {buyerPoints > 0 && (
               <div style={{ padding: '16px', background: 'rgba(175, 82, 222, 0.05)', borderRadius: '8px', border: '1px dashed rgba(175, 82, 222, 0.3)', marginBottom: '16px' }}>
                 <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', margin: 0 }}>
@@ -185,7 +191,7 @@ export const CartPage: React.FC = () => {
             >
               Thanh toán qua PayOS
             </button>
-             <button
+            <button
               className="btn btn-secondary"
               style={{ width: '100%', padding: '16px', fontSize: '16px' }}
               onClick={() => {
@@ -212,7 +218,7 @@ export const CartPage: React.FC = () => {
           onSuccess={() => {
             setShowPayOS(false);
             if (usePoints && pointsDiscount > 0) setBuyerPoints(prev => prev - pointsDiscount);
-            handleCheckout('PAYOS');
+            handleCheckout('PAYOS', finalTotal, shippingFee);
           }}
           onCancel={() => setShowPayOS(false)}
         />
@@ -256,7 +262,7 @@ export const CartPage: React.FC = () => {
                     setShowPayOS(true);
                   } else if (methodToConfirm === 'COD') {
                     if (usePoints && pointsDiscount > 0) setBuyerPoints(prev => prev - pointsDiscount);
-                    handleCheckout('COD');
+                    handleCheckout('COD', finalTotal, shippingFee);
                   }
                   setMethodToConfirm(null);
                 }}

@@ -599,7 +599,7 @@ interface AppContextType {
   handleAddToCart: (product: Product, options?: { color?: string; material?: string }) => void;
   handleRemoveFromCart: (productId: number) => void;
   handleUpdateCartQuantity: (productId: number, qty: number) => void;
-  handleCheckout: (paymentMethod: string) => void;
+  handleCheckout: (paymentMethod: string, finalTotal?: number, shippingFee?: number) => void;
   handleRequestCustomQuote: (data: {
     requirements: string;
     attachmentUrl: string;
@@ -1092,9 +1092,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setCart(cart.map(item => item.product.id === productId ? { ...item, quantity: qty } : item));
   };
 
-  const handleCheckout = (paymentMethod: string) => {
-    const total = cart.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
-    if (total === 0) return;
+  const handleCheckout = (paymentMethod: string, finalTotal?: number, shippingFee?: number) => {
+    const defaultTotal = cart.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
+    const total = finalTotal !== undefined ? finalTotal : defaultTotal;
+    if (total === 0 && defaultTotal === 0) return;
 
     if (paymentMethod === 'WALLET' && walletBalance < total) {
       alert('Số dư ví điện tử không đủ! Vui lòng nạp thêm tiền.');
@@ -1114,7 +1115,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       shippingAddress: defaultAddress,
       date: new Date().toISOString().split('T')[0],
       paymentMethod,
-      trackingNumber: `TRACK-${Math.floor(1000000 + Math.random() * 9000000)}`
+      trackingNumber: `TRACK-${Math.floor(1000000 + Math.random() * 9000000)}`,
+      shippingFee: shippingFee !== undefined ? shippingFee : 0
     };
 
     const proceedCheckout = () => {

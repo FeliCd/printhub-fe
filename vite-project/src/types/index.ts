@@ -42,6 +42,7 @@ export interface Order {
   date: string;
   paymentMethod: string;
   isReviewed?: boolean;
+  shippingFee?: number;
 }
 
 export interface CustomOrderMessage {
