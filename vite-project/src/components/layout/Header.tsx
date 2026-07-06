@@ -5,7 +5,6 @@ import { useApp } from '@/contexts/AppContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 interface HeaderProps {
-  walletBalance: number;
   notifications: AppNotification[];
   setNotifications: React.Dispatch<React.SetStateAction<AppNotification[]>>;
   isNotificationOpen: boolean;
@@ -18,7 +17,6 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({
-  walletBalance,
   notifications,
   setNotifications,
   isNotificationOpen,
@@ -28,7 +26,7 @@ export const Header: React.FC<HeaderProps> = ({
   isSidebarCollapsed,
   onToggleSidebar,
 }) => {
-  const { searchQuery, setSearchQuery, currentUser, theme, toggleTheme } = useApp();
+  const { searchQuery, setSearchQuery, currentUser, theme, toggleTheme, buyerPoints } = useApp();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -117,11 +115,10 @@ export const Header: React.FC<HeaderProps> = ({
                 : 'Quản trị viên (Admin)'}
           </div>
         )}
-
-        {/* Quick Wallet View */}
+        {/* Quick Points View */}
         {currentUser?.role !== 'ADMIN' && (
-          <div className="wallet-quick">
-            <span>Ví:</span> {walletBalance.toLocaleString()}đ
+          <div className="wallet-quick" style={{ borderColor: 'rgba(175, 82, 222, 0.2)' }}>
+            <span style={{ color: '#af52de' }}>Điểm:</span> {buyerPoints?.toLocaleString()}
           </div>
         )}
 

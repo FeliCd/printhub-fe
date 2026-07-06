@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import type { Address } from '@/types';
 import { useApp } from '@/contexts/AppContext';
 import { ProfileInfoCard } from '@/components/profile/ProfileInfoCard';
-import { PasscodeForm } from '@/components/profile/PasscodeForm';
 import { AddressBook } from '@/components/profile/AddressBook';
 import { OrderHistory } from '@/components/profile/OrderHistory';
 
@@ -25,7 +24,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
   onAddAddress,
   onSetDefaultAddress,
 }) => {
-  const { walletPasscode, setWalletPasscode, currentUser, orders, setIsDisputeModalOpen } = useApp();
+  const { currentUser, orders, setIsDisputeModalOpen } = useApp();
   const [activeTab, setActiveTab] = useState<'PROFILE' | 'ORDERS'>('PROFILE');
 
   const handleTriggerDispute = (orderId: string) => {
@@ -72,10 +71,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
               orders={orders}
             />
 
-            <PasscodeForm
-              walletPasscode={walletPasscode}
-              setWalletPasscode={setWalletPasscode}
-            />
+
           </div>
 
           {/* Address Book */}

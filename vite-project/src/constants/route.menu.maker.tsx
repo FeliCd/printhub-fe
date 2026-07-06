@@ -1,4 +1,4 @@
-import { ShoppingBag, Wallet, AlertOctagon, User, ClipboardList, Gift } from 'lucide-react';
+import { ShoppingBag, AlertOctagon, User, ClipboardList, Gift, Truck, Wallet } from 'lucide-react';
 import type { RouteConfig } from './routes';
 
 export const makerMenuRoutes: RouteConfig[] = [
@@ -15,15 +15,27 @@ export const makerMenuRoutes: RouteConfig[] = [
     allowedRoles: ['MAKER']
   },
   {
-    path: '/subscriptions',
-    label: 'Gói hội viên & Ưu đãi',
-    icon: <Gift size={18} />,
+    path: '/maker/orders-status',
+    label: 'Tình trạng đơn hàng',
+    icon: <Truck size={18} />,
+    allowedRoles: ['MAKER']
+  },
+  {
+    path: '/orders',
+    label: 'Đơn hàng đã mua',
+    icon: <ShoppingBag size={18} />,
     allowedRoles: ['MAKER']
   },
   {
     path: '/wallet',
-    label: 'Ví điện tử & Nạp ví',
+    label: 'Ví điện tử',
     icon: <Wallet size={18} />,
+    allowedRoles: ['MAKER']
+  },
+  {
+    path: '/subscriptions',
+    label: 'Gói hội viên & Ưu đãi',
+    icon: <Gift size={18} />,
     allowedRoles: ['MAKER']
   },
   {

@@ -1,140 +1,106 @@
 import React from 'react';
 import { X, Trash2 } from 'lucide-react';
 import type { CartItem } from '@/types';
+import { useNavigate } from 'react-router-dom';
 
 interface CartDrawerProps {
   cart: CartItem[];
   onClose: () => void;
   onRemove: (productId: number) => void;
-  onUpdateQuantity: (productId: number, qty: number) => void;
-  onCheckout: (method: string) => void;
 }
 
 export const CartDrawer: React.FC<CartDrawerProps> = ({
   cart,
   onClose,
   onRemove,
-  onUpdateQuantity,
-  onCheckout,
 }) => {
+  const navigate = useNavigate();
   const total = cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-content" style={{ maxWidth: '600px', padding: '32px' }}>
-        <button className="modal-close" onClick={onClose}>
-          <X size={20} />
-        </button>
-        <h2>Giỏ hàng của bạn</h2>
-        <div style={{ marginTop: '24px' }}>
+    <div className="modal-overlay" style={{ justifyContent: 'flex-end' }}>
+      <div 
+        className="modal-content" 
+        style={{ 
+          margin: 0, 
+          height: '100vh', 
+          width: '100%', 
+          maxWidth: '400px', 
+          borderRadius: 0,
+          display: 'flex',
+          flexDirection: 'column'
+        }}
+      >
+        <div style={{ padding: '24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <h2 style={{ margin: 0, fontSize: '20px' }}>Giỏ hàng ({cart.length})</h2>
+          <button style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }} onClick={onClose}>
+            <X size={24} />
+          </button>
+        </div>
+
+        <div style={{ flex: 1, overflowY: 'auto', padding: '24px' }}>
           {cart.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--text-muted)' }}>
+            <div style={{ textAlign: 'center', padding: '48px 0', color: 'var(--text-muted)' }}>
               Giỏ hàng của bạn đang trống.
             </div>
           ) : (
-            <>
-              <div
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '16px',
-                  maxHeight: '300px',
-                  overflowY: 'auto',
-                  marginBottom: '24px',
-                }}
-              >
-                {cart.map((item) => (
-                  <div
-                    key={item.product.id}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '16px',
-                      borderBottom: '1px solid var(--border)',
-                      paddingBottom: '12px',
-                    }}
-                  >
-                    <img
-                      src={item.product.image}
-                      alt={item.product.name}
-                      style={{ width: '60px', height: '60px', objectFit: 'cover', borderRadius: '8px' }}
-                    />
-                    <div style={{ flex: 1 }}>
-                      <h4 style={{ margin: '0 0 4px 0', fontSize: '14px' }}>{item.product.name}</h4>
-                      {(item.selectedColor || item.selectedMaterial) && (
-                        <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '4px' }}>
-                          Cấu hình: {item.selectedColor} | Nhựa {item.selectedMaterial}
-                        </div>
-                      )}
-                      <div style={{ fontFamily: 'var(--mono)', fontSize: '13px', color: 'var(--primary)' }}>
-                        {item.product.price.toLocaleString()}đ
-                      </div>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <button
-                        className="btn btn-secondary"
-                        style={{ padding: '2px 8px', fontSize: '12px' }}
-                        onClick={() => onUpdateQuantity(item.product.id, item.quantity - 1)}
-                      >
-                        -
-                      </button>
-                      <span>{item.quantity}</span>
-                      <button
-                        className="btn btn-secondary"
-                        style={{ padding: '2px 8px', fontSize: '12px' }}
-                        onClick={() => onUpdateQuantity(item.product.id, item.quantity + 1)}
-                      >
-                        +
-                      </button>
-                    </div>
-                    <button
-                      style={{ background: 'none', border: 'none', color: '#ff3b30', cursor: 'pointer' }}
-                      onClick={() => onRemove(item.product.id)}
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-
-              <div style={{ borderTop: '1px solid var(--border)', paddingTop: '16px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', marginBottom: '8px' }}>
-                  <span>Tổng tiền hàng:</span>
-                  <strong>{total.toLocaleString()}đ</strong>
-                </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {cart.map((item) => (
                 <div
+                  key={item.product.id}
                   style={{
                     display: 'flex',
-                    justifyContent: 'space-between',
-                    fontSize: '12px',
-                    color: 'var(--text-secondary)',
-                    marginBottom: '16px',
+                    alignItems: 'flex-start',
+                    gap: '16px',
+                    paddingBottom: '16px',
+                    borderBottom: '1px solid var(--border)'
                   }}
                 >
-                  <span>Phí sàn PrintHub (5% đã trừ cho Maker):</span>
-                  <span>{Math.round(total * 0.05).toLocaleString()}đ</span>
-                </div>
-
-                <div style={{ display: 'flex', gap: '12px' }}>
+                  <img
+                    src={item.product.image}
+                    alt={item.product.name}
+                    style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '8px' }}
+                  />
+                  <div style={{ flex: 1 }}>
+                    <h4 style={{ margin: '0 0 4px 0', fontSize: '14px', lineHeight: '1.4' }}>{item.product.name}</h4>
+                    <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '8px' }}>
+                      SL: {item.quantity}
+                    </div>
+                    <div style={{ fontFamily: 'var(--mono)', fontSize: '14px', color: 'var(--primary)', fontWeight: 'bold' }}>
+                      {(item.product.price * item.quantity).toLocaleString()}đ
+                    </div>
+                  </div>
                   <button
-                    className="btn btn-primary"
-                    style={{ flex: 1 }}
-                    onClick={() => onCheckout('WALLET')}
+                    style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '4px' }}
+                    onClick={() => onRemove(item.product.id)}
+                    title="Xóa"
                   >
-                    Thanh toán bằng Ví điện tử
-                  </button>
-                  <button
-                    className="btn btn-secondary"
-                    style={{ flex: 1 }}
-                    onClick={() => onCheckout('BANK_TRANSFER')}
-                  >
-                    Chuyển khoản / VNPay
+                    <Trash2 size={16} />
                   </button>
                 </div>
-              </div>
-            </>
+              ))}
+            </div>
           )}
         </div>
+
+        {cart.length > 0 && (
+          <div style={{ padding: '24px', borderTop: '1px solid var(--border)', background: 'var(--surface)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px', fontSize: '16px', fontWeight: 'bold' }}>
+              <span>Tạm tính:</span>
+              <span>{total.toLocaleString()}đ</span>
+            </div>
+            <button
+              className="btn btn-primary"
+              style={{ width: '100%', padding: '14px', fontSize: '16px' }}
+              onClick={() => {
+                onClose();
+                navigate('/cart');
+              }}
+            >
+              Xem trang Giỏ Hàng
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

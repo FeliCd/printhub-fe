@@ -12,7 +12,7 @@ interface PrintRequestsPageProps {
   onMakerQuote: (orderId: string, price: number) => void;
   onMakerSendMessage: (orderId: string, text: string) => void;
   onMakerUploadProof: (orderId: string, img: string, note: string) => void;
-  onUpdateOrderStatus: (orderId: string, status: Order['status']) => void;
+  onUpdateOrderStatus: (orderId: string, status: Order['status'], trackingNumber?: string) => void;
 }
 
 export const PrintRequestsPage: React.FC<PrintRequestsPageProps> = ({

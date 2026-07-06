@@ -635,11 +635,13 @@ interface AppContextType {
   handleBuyerCompleteCustom: (orderId: string) => void;
   handleResolveDispute: (id: string, refundAmount: number, refundType: 'FULL' | 'PARTIAL' | 'NONE') => void;
   handleMakerSubmitEvidence: (disputeId: string, evidenceUrl: string) => void;
-  handleUpdateOrderStatus: (orderId: string, status: Order['status']) => void;
+  handleUpdateOrderStatus: (orderId: string, status: Order['status'], trackingNumber?: string) => void;
   handleDeleteProduct: (productId: number) => void;
   handleLogin: (name: string, role: 'BUYER' | 'MAKER' | 'ADMIN') => void;
   handleLogout: () => void;
   isAllowed: (path: string) => boolean;
+  triggerViolation: () => void;
+  handlePayFine: () => void;
   buyerPoints: number;
   setBuyerPoints: React.Dispatch<React.SetStateAction<number>>;
   subscriptionPlans: SubscriptionPlan[];
@@ -647,7 +649,7 @@ interface AppContextType {
   userSubscriptions: UserSubscription[];
   setUserSubscriptions: React.Dispatch<React.SetStateAction<UserSubscription[]>>;
   mockUsers: MockUser[];
-  handleBuySubscription: (planId: string, paymentMethod: 'WALLET' | 'POINTS') => void;
+  handleBuySubscription: (planId: string, paymentMethod: 'WALLET' | 'POINTS' | 'BANK_TRANSFER') => void;
   handleAddPlan: (plan: SubscriptionPlanRequest, type: SubscriptionType) => void;
   handleUpdatePlan: (id: string, plan: SubscriptionPlanRequest) => void;
   handleDeletePlan: (id: string) => void;
@@ -1363,27 +1365,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     if (!order) return;
     const price = order.quotedPrice || 0;
 
-    if (walletBalance < price) {
-      alert('Số dư ví điện tử không đủ! Vui lòng nạp thêm tiền.');
-      return;
-    }
-
-    openPasscodeModal(() => {
+    if (confirm(`Bạn xác nhận thanh toán số tiền ${price.toLocaleString()}đ cho báo giá in 3D thiết kế mã ${orderId} qua Chuyển khoản / VNPay?`)) {
       setCustomOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: 'ACCEPTED' as const } : o));
-      setWalletBalance(prev => prev - price);
-      setWalletTransactions(prev => [
-        {
-          id: `TX-${Date.now()}`,
-          type: 'DEBIT',
-          amount: price,
-          description: `Thanh toán thiết kế in mã ${orderId}`,
-          date: new Date().toISOString().split('T')[0]
-        },
-        ...prev
-      ]);
       addNotification('ORDER', 'Chấp nhận báo giá & Thanh toán', `Bạn đã đồng ý thiết kế in mã ${orderId} và thanh toán ${price.toLocaleString()}đ.`);
       alert(`Chấp nhận báo giá và thanh toán thành công cho đơn ${orderId}!`);
-    });
+    }
   };
 
   const handleMakerUploadProof = (orderId: string, img: string, note: string) => {
@@ -1468,7 +1454,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     } : d));
   };
 
-  const handleUpdateOrderStatus = (orderId: string, status: Order['status']) => {
+  const handleUpdateOrderStatus = (orderId: string, status: Order['status'], trackingNumber?: string) => {
     setOrders(prevOrders => prevOrders.map(order => {
       if (order.id === orderId) {
         // If transitioning to COMPLETED, credit the maker
@@ -1500,7 +1486,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         } else if (status === 'PROCESSING') {
           addNotification('ORDER', 'Đơn hàng đang xử lý', `Đơn hàng ${orderId} đang được Maker chuẩn bị.`);
         }
-        return { ...order, status };
+        return { ...order, status, ...(trackingNumber ? { trackingNumber } : {}) };
       }
       return order;
     }));
@@ -1518,6 +1504,37 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setCart([]);
   };
 
+  const triggerViolation = () => {
+    setWalletBalance(-1500000);
+    setWalletTransactions(prev => [
+      {
+        id: `TX-FINE-${Date.now()}`,
+        type: 'DEBIT',
+        amount: 1500000,
+        description: 'Phạt hành chính do vi phạm quy chế sàn (Bùng đơn, hủy đơn vô căn cứ)',
+        date: new Date().toISOString().split('T')[0]
+      },
+      ...prev
+    ]);
+    addNotification('PAYMENT', 'Tài khoản bị khóa', 'Tài khoản đang bị khóa do số dư âm do vi phạm quy chế sàn.');
+  };
+
+  const handlePayFine = () => {
+    const fineAmount = Math.abs(walletBalance);
+    setWalletBalance(0);
+    setWalletTransactions(prev => [
+      {
+        id: `TX-UNLOCK-${Date.now()}`,
+        type: 'CREDIT',
+        amount: fineAmount,
+        description: 'Thanh toán nộp phạt hành chính (Pay-to-Unlock) khôi phục tài khoản',
+        date: new Date().toISOString().split('T')[0]
+      },
+      ...prev
+    ]);
+    addNotification('PAYMENT', 'Mở khóa tài khoản thành công', 'Tài khoản đã khôi phục quyền hoạt động.');
+  };
+
   const handleDeleteProduct = (productId: number) => {
     const prod = products.find(p => p.id === productId);
     if (!prod) return;
@@ -1526,7 +1543,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     alert(`Đã gỡ bỏ thành công sản phẩm "${prod.name}" khỏi sàn.`);
   };
 
-  const handleBuySubscription = (planId: string, paymentMethod: 'WALLET' | 'POINTS') => {
+  const handleBuySubscription = (planId: string, paymentMethod: 'WALLET' | 'POINTS' | 'BANK_TRANSFER') => {
     const plan = subscriptionPlans.find(p => p.id === planId);
     if (!plan) {
       alert('Không tìm thấy thông tin gói ưu đãi!');
@@ -1553,7 +1570,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           },
           ...prev
         ]);
-      } else {
+      } else if (paymentMethod === 'POINTS') {
         const costPoints = plan.requiredPoints || 0;
         if (costPoints === 0) {
           alert('Gói này không thể đổi bằng điểm tích lũy!');
@@ -1591,6 +1608,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
     if (paymentMethod === 'WALLET') {
       openPasscodeModal(checkAndProcess);
+    } else if (paymentMethod === 'BANK_TRANSFER') {
+      if (confirm(`Bạn xác nhận thanh toán ${plan.price?.toLocaleString()}đ qua Cổng VNPay/Chuyển khoản để kích hoạt gói "${plan.name}"?`)) {
+        checkAndProcess();
+      }
     } else {
       checkAndProcess();
     }
@@ -1743,6 +1764,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         handleLogin,
         handleLogout,
         isAllowed,
+        triggerViolation,
+        handlePayFine,
         buyerPoints,
         setBuyerPoints,
         subscriptionPlans,

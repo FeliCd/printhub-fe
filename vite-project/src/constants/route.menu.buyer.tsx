@@ -1,4 +1,4 @@
-import { ShoppingBag, Sparkles, Wallet, AlertOctagon, User, Gift } from 'lucide-react';
+import { ShoppingBag, Sparkles, AlertOctagon, User, Gift, Wallet } from 'lucide-react';
 import type { RouteConfig } from './routes';
 
 export const buyerMenuRoutes: RouteConfig[] = [
@@ -15,15 +15,21 @@ export const buyerMenuRoutes: RouteConfig[] = [
     allowedRoles: ['BUYER']
   },
   {
-    path: '/subscriptions',
-    label: 'Gói hội viên & Ưu đãi',
-    icon: <Gift size={18} />,
+    path: '/orders',
+    label: 'Đơn hàng của tôi',
+    icon: <ShoppingBag size={18} />,
     allowedRoles: ['BUYER']
   },
   {
     path: '/wallet',
-    label: 'Ví điện tử & Nạp ví',
+    label: 'Ví điện tử',
     icon: <Wallet size={18} />,
+    allowedRoles: ['BUYER']
+  },
+  {
+    path: '/subscriptions',
+    label: 'Gói hội viên & Ưu đãi',
+    icon: <Gift size={18} />,
     allowedRoles: ['BUYER']
   },
   {

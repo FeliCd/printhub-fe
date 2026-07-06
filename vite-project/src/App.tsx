@@ -20,6 +20,9 @@ import { LandingPage } from '@/pages/LandingPage';
 import { CatalogPreviewPage } from '@/pages/CatalogPreviewPage';
 import { SubscriptionsPage } from '@/pages/SubscriptionsPage';
 import { AdminSubscriptionsPage } from '@/pages/AdminSubscriptionsPage';
+import { CartPage } from '@/pages/CartPage';
+import { OrdersPage } from '@/pages/OrdersPage';
+import { MakerOrdersStatusPage } from '@/pages/MakerOrdersStatusPage';
 
 // Modals & Drawers
 import { ProductDetailModal } from '@/components/shared/ProductDetailModal';
@@ -28,6 +31,7 @@ import { CartDrawer } from '@/components/shared/CartDrawer';
 import { DisputeModal } from '@/components/shared/DisputeModal';
 import { CustomOrderModal } from '@/components/shared/CustomOrderModal';
 import { PasscodeModal } from '@/components/shared/PasscodeModal';
+import { LockOverlayModal } from '@/components/shared/LockOverlayModal';
 
 // App Context
 import { useApp } from '@/contexts/AppContext';
@@ -35,7 +39,6 @@ import { useApp } from '@/contexts/AppContext';
 interface DashboardContainerProps {
   currentUser: any;
   handleLogout: () => void;
-  walletBalance: number;
   notifications: any[];
   setNotifications: any;
   isNotificationOpen: boolean;
@@ -49,7 +52,6 @@ interface DashboardContainerProps {
 const DashboardContainer: React.FC<DashboardContainerProps> = ({
   currentUser,
   handleLogout,
-  walletBalance,
   notifications,
   setNotifications,
   isNotificationOpen,
@@ -75,7 +77,6 @@ const DashboardContainer: React.FC<DashboardContainerProps> = ({
       <main className="main-content">
         {/* Header bar */}
         <Header
-          walletBalance={walletBalance}
           notifications={notifications}
           setNotifications={setNotifications}
           isNotificationOpen={isNotificationOpen}
@@ -104,6 +105,8 @@ export default function App() {
   const {
     isAuthenticated,
     currentUser,
+    walletBalance,
+    handlePayFine,
     products,
     cart,
     addresses,
@@ -112,7 +115,6 @@ export default function App() {
     disputes,
     notifications,
     setNotifications,
-    walletBalance,
     walletTransactions,
     makerProfile,
     selectedProduct,
@@ -131,8 +133,6 @@ export default function App() {
     setTopupAmount,
     handleAddToCart,
     handleRemoveFromCart,
-    handleUpdateCartQuantity,
-    handleCheckout,
     handleRequestCustomQuote,
     handleAddProduct,
     handleAddAddress,
@@ -201,7 +201,6 @@ export default function App() {
               <DashboardContainer
                 currentUser={currentUser}
                 handleLogout={handleLogout}
-                walletBalance={walletBalance}
                 notifications={notifications}
                 setNotifications={setNotifications}
                 isNotificationOpen={isNotificationOpen}
@@ -328,6 +327,30 @@ export default function App() {
                     }
                   />
                 )}
+                {isAllowed('/cart') || true ? (
+                  <Route path="/cart" element={<CartPage />} />
+                ) : null}
+                {isAllowed('/orders') && (
+                  <Route
+                    path="/orders"
+                    element={<OrdersPage orders={orders} />}
+                  />
+                )}
+                {isAllowed('/maker/orders-status') && (
+                  <Route
+                    path="/maker/orders-status"
+                    element={
+                      <MakerOrdersStatusPage
+                        customOrders={customOrders}
+                        orders={orders}
+                        onMakerQuote={handleMakerQuote}
+                        onMakerSendMessage={handleMakerSendMessage}
+                        onMakerUploadProof={handleMakerUploadProof}
+                        onUpdateOrderStatus={handleUpdateOrderStatus}
+                      />
+                    }
+                  />
+                )}
                       <Route path="*" element={<Navigate to="/catalog" replace />} />
                     </Routes>
               </DashboardContainer>
@@ -360,8 +383,6 @@ export default function App() {
           cart={cart}
           onClose={() => setIsCartOpen(false)}
           onRemove={handleRemoveFromCart}
-          onUpdateQuantity={handleUpdateCartQuantity}
-          onCheckout={handleCheckout}
         />
       )}
 
@@ -388,6 +409,14 @@ export default function App() {
         correctPasscode={walletPasscode}
         onSuccess={passcodeCallback || (() => {})}
       />
+
+      {/* SUSPENSION LOCK OVERLAY */}
+      {isAuthenticated && walletBalance < 0 && (
+        <LockOverlayModal
+          walletBalance={walletBalance}
+          onPayFine={handlePayFine}
+        />
+      )}
     </HashRouter>
   );
 }

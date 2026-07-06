@@ -2,7 +2,6 @@ import React from 'react';
 import { useApp } from '@/contexts/AppContext';
 import { 
   Gift, 
-  Wallet, 
   Award, 
   CheckCircle2, 
   Calendar, 
@@ -10,12 +9,12 @@ import {
   Sparkles, 
   RotateCcw, 
   BadgeCheck, 
-  Star
+  Star,
+  CreditCard
 } from 'lucide-react';
 
 export const SubscriptionsPage: React.FC = () => {
   const {
-    walletBalance,
     buyerPoints,
     subscriptionPlans,
     userSubscriptions,
@@ -119,44 +118,10 @@ export const SubscriptionsPage: React.FC = () => {
       {/* Overview Balances Widget */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+        gridTemplateColumns: '1fr',
         gap: '20px',
         marginBottom: '32px'
       }}>
-        {/* Wallet Balance Card */}
-        <div className="glass-card" style={{
-          padding: '24px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '20px',
-          background: 'linear-gradient(135deg, rgba(18, 18, 18, 0.9) 0%, rgba(28, 28, 28, 0.9) 100%)',
-          borderLeft: '4px solid var(--primary)',
-          borderRadius: '16px',
-          marginBottom: 0,
-          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)'
-        }}>
-          <div style={{
-            width: '52px',
-            height: '52px',
-            borderRadius: '14px',
-            backgroundColor: 'rgba(57, 255, 20, 0.08)',
-            color: 'var(--primary)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 0 10px rgba(57, 255, 20, 0.05)'
-          }}>
-            <Wallet size={26} />
-          </div>
-          <div>
-            <div style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: '600' }}>
-              Số dư ví điện tử (VNĐ)
-            </div>
-            <div style={{ fontSize: '24px', fontWeight: 'bold', fontFamily: 'var(--mono)', marginTop: '4px', color: '#fff' }}>
-              {walletBalance.toLocaleString()}đ
-            </div>
-          </div>
-        </div>
 
         {/* Reward Points Card */}
         <div className="glass-card" style={{
@@ -574,9 +539,9 @@ export const SubscriptionsPage: React.FC = () => {
                       </div>
                     </div>
 
-                    <button
+                     <button
                       disabled={isOwned}
-                      onClick={() => handleBuySubscription(plan.id, 'WALLET')}
+                      onClick={() => handleBuySubscription(plan.id, 'BANK_TRANSFER')}
                       className="btn btn-primary"
                       style={{
                         padding: '8px 16px',
@@ -589,8 +554,8 @@ export const SubscriptionsPage: React.FC = () => {
                         cursor: isOwned ? 'not-allowed' : 'pointer'
                       }}
                     >
-                      <Wallet size={14} />
-                      {isOwned ? 'Đã đăng ký' : 'Mua gói ngay'}
+                      <CreditCard size={14} />
+                      {isOwned ? 'Đã đăng ký' : 'Thanh toán VNPay'}
                     </button>
                   </div>
                 </div>
