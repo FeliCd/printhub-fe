@@ -1,6 +1,5 @@
 import React, { useEffect } from "react";
-import { Sun, Moon } from "lucide-react";
-import { useApp } from "@/contexts/AppContext";
+
 import SignUpCard from "./signup-1";
 
 interface AnimatedSignUpProps {
@@ -8,8 +7,7 @@ interface AnimatedSignUpProps {
 }
 
 const AnimatedSignUp: React.FC<AnimatedSignUpProps> = ({ onSignUpSuccess }) => {
-  const { theme, toggleTheme } = useApp();
-  const isDarkMode = theme === 'dark';
+
 
   useEffect(() => {
     const canvas = document.getElementById("particles-canvas") as HTMLCanvasElement;
@@ -68,28 +66,17 @@ const AnimatedSignUp: React.FC<AnimatedSignUpProps> = ({ onSignUpSuccess }) => {
       window.removeEventListener("resize", setCanvasSize);
       cancelAnimationFrame(animFrameId);
     };
-  }, [isDarkMode]);
+  }, []);
 
   return (
     <div
-      className={`login-container ${isDarkMode ? "dark" : "light"}`}
+      className="login-container"
       style={{ position: 'relative', width: '100%', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}
     >
       {/* Animated particles canvas */}
       <canvas id="particles-canvas" className="particles-canvas" />
 
-      {/* Theme toggle switch */}
-      <div className="theme-toggle-container">
-        <div
-          className={`theme-switch ${theme}`}
-          onClick={toggleTheme}
-          title={theme === 'dark' ? "Chuyển sang giao diện sáng" : "Chuyển sang giao diện tối"}
-        >
-          <div className="theme-switch-knob">
-            {theme === 'dark' ? <Moon size={10} style={{ fill: 'currentColor' }} /> : <Sun size={10} style={{ fill: 'currentColor' }} />}
-          </div>
-        </div>
-      </div>
+
 
       {/* Sign Up card — rendered over the animated background */}
       <div style={{ position: 'relative', zIndex: 10, width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '24px 16px', animation: 'cardReveal 0.7s cubic-bezier(0.16,1,0.3,1) both' }}>

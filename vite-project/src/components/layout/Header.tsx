@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, Bell, ShoppingCart, Sun, Moon, Menu } from 'lucide-react';
+import { Search, Bell, ShoppingCart, Menu } from 'lucide-react';
 import type { AppNotification, CartItem } from '@/types';
 import { useApp } from '@/contexts/AppContext';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -26,7 +26,7 @@ export const Header: React.FC<HeaderProps> = ({
   isSidebarCollapsed,
   onToggleSidebar,
 }) => {
-  const { searchQuery, setSearchQuery, currentUser, theme, toggleTheme, buyerPoints } = useApp();
+  const { searchQuery, setSearchQuery, currentUser, buyerPoints } = useApp();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -122,16 +122,7 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         )}
 
-        {/* Global Theme Toggle Switch */}
-        <div
-          className={`theme-switch ${theme}`}
-          onClick={toggleTheme}
-          title={theme === 'dark' ? "Chuyển sang giao diện sáng" : "Chuyển sang giao diện tối"}
-        >
-          <div className="theme-switch-knob">
-            {theme === 'dark' ? <Moon size={10} style={{ fill: 'currentColor' }} /> : <Sun size={10} style={{ fill: 'currentColor' }} />}
-          </div>
-        </div>
+
 
         {/* Notifications Bell */}
         <div style={{ position: 'relative' }}>

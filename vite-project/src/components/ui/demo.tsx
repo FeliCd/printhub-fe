@@ -1,4 +1,4 @@
-import { Spotlight } from "@/components/ui/spotlight";
+import { LampContainer } from "@/components/ui/lamp";
 import { SplineScene } from "@/components/ui/splite";
 import { ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -7,13 +7,11 @@ export function SplineDemo() {
   return (
     // Đổi h-screen thành min-h-screen để tránh lỗi cuộn trên mobile.
     // Dùng flex-col cho mobile, lg:flex-row cho desktop.
-    <div className="min-h-screen w-full bg-black/[0.96] relative overflow-hidden flex flex-col lg:flex-row items-center justify-between">
-      
-      {/* Background (Spotlight) */}
-      <Spotlight className="-top-40 left-0 md:left-60 md:-top-20 z-0" fill="#39FF14" />
-
-      {/* Text + CTA -> Cập nhật chiếm full width trên mobile, nửa trái trên desktop */}
-      <div className="w-full lg:w-1/2 flex flex-col justify-center px-6 sm:px-12 md:px-16 lg:px-24 py-12 lg:py-8 relative z-10 text-center lg:text-left">
+    <LampContainer>
+      <div className="w-full min-h-screen flex flex-col lg:flex-row items-center justify-between p-0 relative z-10">
+        
+        {/* Text + CTA -> Cập nhật chiếm full width trên mobile, nửa trái trên desktop */}
+        <div className="w-full lg:w-1/2 flex flex-col justify-center px-6 sm:px-12 md:px-16 lg:px-24 py-12 lg:py-8 relative z-10 text-center lg:text-left">
         
         {/* Thay thế Card components bằng thẻ HTML chuẩn */}
         <h1 className="text-4xl sm:text-5xl lg:text-7xl font-black leading-tight mb-4">
@@ -50,8 +48,8 @@ export function SplineDemo() {
           className="w-full h-full"
         />
       </div>
-      
-    </div>
+      </div>
+    </LampContainer>
   );
 }
 
