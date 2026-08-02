@@ -1,81 +1,153 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useApp } from '@/contexts/AppContext';
-import { StatsGrid } from '@/components/admin/StatsGrid';
-import { RevenueChart } from '@/components/admin/RevenueChart';
-import { TransactionsLedger } from '@/components/admin/TransactionsLedger';
-import { DisputesLedger } from '@/components/admin/DisputesLedger';
+import { Printer, Download, FileSpreadsheet, CheckCircle2 } from 'lucide-react';
 
 export const AdminDashboardPage: React.FC = () => {
-  const { orders, customOrders, disputes, products } = useApp();
+  const { orders } = useApp();
+  const [exported, setExported] = useState(false);
 
-  // Calculate paid standard orders (all placed catalog/standard orders are paid)
-  const paidStandardOrders = orders.filter(o => o.status !== 'CANCELLED');
-  const totalStandardGross = paidStandardOrders.reduce((sum, o) => sum + o.totalAmount, 0);
-  const totalStandardComm = paidStandardOrders.reduce((sum, o) => sum + o.commissionFee, 0);
+  // Extract all engraved items
+  const engravedItems: { orderId: string; name: string; text: string; color: string; status: string }[] = [];
 
-  // Calculate paid custom orders (PAID, PRINTING, SHIPPED, COMPLETED)
-  const paidCustomOrders = customOrders.filter(co => ['PAID', 'PRINTING', 'SHIPPED', 'COMPLETED'].includes(co.status));
-  const totalCustomGross = paidCustomOrders.reduce((sum, co) => sum + (co.quotedPrice || 0), 0);
-  const totalCustomComm = paidCustomOrders.reduce((sum, co) => sum + Math.round((co.quotedPrice || 0) * 0.05), 0);
+  orders.forEach((o) => {
+    o.items.forEach((item) => {
+      engravedItems.push({
+        orderId: o.id,
+        name: item.product.name,
+        text: item.engravingText || 'Nguyễn Văn A - SE190182',
+        color: item.selectedColor || 'Neon Green',
+        status: o.status,
+      });
+    });
+  });
 
-  // Combined totals
-  const totalGross = totalStandardGross + totalCustomGross;
-  const totalCommission = totalStandardComm + totalCustomComm;
-  const totalCompletedCount = paidStandardOrders.length + paidCustomOrders.length;
+  const handleExportCSV = () => {
+    const csvContent =
+      'data:text/csv;charset=utf-8,' +
+      'STT,MaDonHang,TenSanPham,NoiDungKhacTen,MauNhuaPLA,TrangThai\n' +
+      engravedItems
+        .map(
+          (item, idx) =>
+            `${idx + 1},${item.orderId},"${item.name}","${item.text}","${item.color}",${item.status}`
+        )
+        .join('\n');
 
-  // Monthly mock revenue data for CSS bar chart
-  const MOCK_MONTHLY_REVENUE = [
-    { month: 'Tháng 1', value: 850000, label: '42.500đ' },
-    { month: 'Tháng 2', value: 1200000, label: '60.000đ' },
-    { month: 'Tháng 3', value: 2450000, label: '122.500đ' },
-    { month: 'Tháng 4', value: 1980000, label: '99.000đ' },
-    { month: 'Tháng 5', value: 3100000, label: '155.000đ' },
-    { month: 'Tháng 6', value: totalGross, label: `${totalCommission.toLocaleString()}đ` },
-  ];
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `Danh_Sach_Khac_Ten_In3D_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 
-  const maxVal = Math.max(...MOCK_MONTHLY_REVENUE.map(m => m.value)) || 1;
-
-  // Resolved disputes list for dispute history preview
-  const resolvedDisputes = disputes.filter(d => d.status === 'RESOLVED');
+    setExported(true);
+    setTimeout(() => setExported(false), 3000);
+  };
 
   return (
     <div>
-      <div style={{ marginBottom: '24px' }}>
-        <h1 className="page-title">Báo cáo doanh thu & Quản trị sàn</h1>
-        <p className="page-subtitle">Thống kê chi tiết doanh thu từ 5% hoa hồng trên mỗi đơn hàng thành công</p>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+        <div>
+          <h1 className="page-title" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <Printer className="logo-accent" size={32} />
+            Quản Lý Xưởng In 3D & Tiến Độ Khắc Tên
+          </h1>
+          <p className="page-subtitle">Quản lý lịch chạy máy in FDM, tồn kho nhựa PLA và xuất danh sách khắc tên hàng loạt cho xưởng</p>
+        </div>
+        <button
+          className="btn btn-primary"
+          style={{ gap: '8px', padding: '12px 18px', fontWeight: 'bold' }}
+          onClick={handleExportCSV}
+        >
+          <Download size={18} /> Xuất File Danh Sách Khắc Tên (.CSV / Excel)
+        </button>
       </div>
 
-      {/* Stats Dashboard Grid */}
-      <StatsGrid
-        totalCommission={totalCommission}
-        totalGross={totalGross}
-        totalCompletedCount={totalCompletedCount}
-        completedStandardOrdersCount={paidStandardOrders.length}
-        completedCustomOrdersCount={paidCustomOrders.length}
-        productsCount={products.length}
-      />
+      {exported && (
+        <div style={{ background: 'rgba(57, 255, 20, 0.15)', border: '1px solid #39FF14', padding: '12px', borderRadius: '8px', marginBottom: '16px', color: '#39FF14', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <CheckCircle2 size={18} /> Đã xuất file CSV chứa {engravedItems.length} dòng dữ liệu khắc tên thành công!
+        </div>
+      )}
 
-      {/* Main Charts & Table section */}
-      <div style={{ display: 'grid', gridTemplateColumns: '350px 1fr', gap: '24px', marginBottom: '24px' }}>
-        
-        {/* Left Column: Neon CSS Bar Chart */}
-        <RevenueChart
-          monthlyRevenue={MOCK_MONTHLY_REVENUE}
-          maxVal={maxVal}
-        />
+      {/* Production Stats Grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '24px' }}>
+        <div style={{ background: 'var(--surface)', padding: '20px', borderRadius: '12px', border: '1px solid var(--border)' }}>
+          <span style={{ fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Tổng cây thước cần in</span>
+          <div style={{ fontSize: '28px', fontWeight: 'bold', color: 'var(--primary)', fontFamily: 'var(--mono)', marginTop: '4px' }}>
+            {engravedItems.length * 3} cây
+          </div>
+          <span style={{ fontSize: '11px', color: '#39FF14' }}>Dự kiến: 1.2 kg nhựa PLA</span>
+        </div>
 
-        {/* Right Column: Transactions Ledger */}
-        <TransactionsLedger
-          completedStandardOrders={paidStandardOrders}
-          completedCustomOrders={paidCustomOrders}
-          totalCompletedCount={totalCompletedCount}
-        />
+        <div style={{ background: 'var(--surface)', padding: '20px', borderRadius: '12px', border: '1px solid var(--border)' }}>
+          <span style={{ fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Đơn cọc PayOS đã duyệt</span>
+          <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#00E5FF', fontFamily: 'var(--mono)', marginTop: '4px' }}>
+            {orders.length} đơn
+          </div>
+          <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>100% đảm bảo cọc</span>
+        </div>
+
+        <div style={{ background: 'var(--surface)', padding: '20px', borderRadius: '12px', border: '1px solid var(--border)' }}>
+          <span style={{ fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Tồn kho nhựa PLA</span>
+          <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#FF4081', fontFamily: 'var(--mono)', marginTop: '4px' }}>
+            14.5 kg
+          </div>
+          <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>5 cuộn nhựa sẵn sàng</span>
+        </div>
+
+        <div style={{ background: 'var(--surface)', padding: '20px', borderRadius: '12px', border: '1px solid var(--border)' }}>
+          <span style={{ fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Doanh thu dự kiến</span>
+          <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#FFF', fontFamily: 'var(--mono)', marginTop: '4px' }}>
+            {(orders.reduce((s, o) => s + o.totalAmount, 0)).toLocaleString()}đ
+          </div>
+          <span style={{ fontSize: '11px', color: '#39FF14' }}>Lợi nhuận gộp: ~40%</span>
+        </div>
       </div>
 
-      {/* Lower section: Dispute histories log */}
-      <DisputesLedger
-        resolvedDisputes={resolvedDisputes}
-      />
+      {/* Engraving Batch Table */}
+      <div className="glass-card">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          <h2 style={{ fontSize: '18px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <FileSpreadsheet className="logo-accent" size={20} />
+            Danh Sách Khắc Tên Chờ Chạy Máy In & Khắc Laser ({engravedItems.length} hàng)
+          </h2>
+        </div>
+
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', textAlign: 'left' }}>
+            <thead>
+              <tr style={{ background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border)', color: 'var(--text-muted)', textTransform: 'uppercase', fontSize: '11px' }}>
+                <th style={{ padding: '12px' }}>STT</th>
+                <th style={{ padding: '12px' }}>Mã Đơn</th>
+                <th style={{ padding: '12px' }}>Sản Phẩm Thước</th>
+                <th style={{ padding: '12px' }}>Nội Dung Khắc Tên</th>
+                <th style={{ padding: '12px' }}>Màu Nhựa PLA</th>
+                <th style={{ padding: '12px' }}>Trạng Thái</th>
+              </tr>
+            </thead>
+            <tbody>
+              {engravedItems.map((item, idx) => (
+                <tr key={idx} style={{ borderBottom: '1px solid var(--border)' }}>
+                  <td style={{ padding: '12px', fontFamily: 'var(--mono)' }}>{idx + 1}</td>
+                  <td style={{ padding: '12px', fontFamily: 'var(--mono)', color: 'var(--primary)' }}>{item.orderId}</td>
+                  <td style={{ padding: '12px', fontWeight: 'bold' }}>{item.name}</td>
+                  <td style={{ padding: '12px', color: '#39FF14', fontFamily: 'var(--mono)', fontWeight: 'bold' }}>{item.text}</td>
+                  <td style={{ padding: '12px' }}>
+                    <span style={{ background: 'rgba(255,255,255,0.08)', padding: '4px 8px', borderRadius: '4px', fontSize: '11px' }}>
+                      {item.color}
+                    </span>
+                  </td>
+                  <td style={{ padding: '12px' }}>
+                    <span className="info-tag tag-approved" style={{ fontSize: '11px' }}>
+                      ⚙️ Sẵn sàng chạy máy
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 };

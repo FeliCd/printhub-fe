@@ -1,17 +1,17 @@
-import { ShoppingBag, Sparkles, AlertOctagon, User, Gift, Wallet } from 'lucide-react';
+import { ShoppingBag, Users, User, Gift, Wallet, ShieldCheck } from 'lucide-react';
 import type { RouteConfig } from './routes';
 
 export const buyerMenuRoutes: RouteConfig[] = [
   {
     path: '/catalog',
-    label: 'Sản phẩm & File 3D',
+    label: 'Bộ Thước Kẻ In 3D',
     icon: <ShoppingBag size={18} />,
     allowedRoles: ['BUYER']
   },
   {
     path: '/custom',
-    label: 'Đặt in theo yêu cầu',
-    icon: <Sparkles size={18} />,
+    label: 'Đặt Sỉ Cho Lớp / CLB',
+    icon: <Users size={18} />,
     allowedRoles: ['BUYER']
   },
   {
@@ -34,8 +34,8 @@ export const buyerMenuRoutes: RouteConfig[] = [
   },
   {
     path: '/disputes',
-    label: 'Khiếu nại & Tranh chấp',
-    icon: <AlertOctagon size={18} />,
+    label: 'Đổi trả & Bảo hành số',
+    icon: <ShieldCheck size={18} />,
     allowedRoles: ['BUYER']
   },
   {

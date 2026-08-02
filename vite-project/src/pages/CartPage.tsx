@@ -1,26 +1,24 @@
 import React, { useState, useMemo } from 'react';
-import { Trash2, Gift, ShieldCheck, ShoppingBag } from 'lucide-react';
+import { Trash2, ShieldAlert, ShoppingBag, Lock } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
 import { PayOSMockModal } from '../components/shared/PayOSMockModal';
 
 export const CartPage: React.FC = () => {
-  const { 
-    cart, 
-    handleRemoveFromCart, 
-    handleUpdateCartQuantity, 
+  const {
+    cart,
+    handleRemoveFromCart,
+    handleUpdateCartQuantity,
     handleCheckout,
     userSubscriptions,
-    buyerPoints,
-    setBuyerPoints
   } = useApp();
 
   const [showPayOS, setShowPayOS] = useState(false);
-  const [usePoints, setUsePoints] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
-  const [methodToConfirm, setMethodToConfirm] = useState<'PAYOS' | 'COD' | null>(null);
+  const [showDepositFrictionPopup, setShowDepositFrictionPopup] = useState(false);
+  const [isDepositAgreed, setIsDepositAgreed] = useState(false);
 
   const subtotal = useMemo(() => cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0), [cart]);
-  
+  const hasCustomEngravedRuler = useMemo(() => cart.some((item) => item.engravingText || item.product.isCustomizable), [cart]);
+
   // Check active subscription discount
   const activeSub = userSubscriptions.find(sub => sub.isActive && sub.planType === 'CUSTOMER');
   let discountPercentage = 0;
@@ -33,24 +31,39 @@ export const CartPage: React.FC = () => {
 
   const subDiscount = Math.round(subtotal * discountPercentage);
   let totalAfterSub = subtotal - subDiscount;
-  
-  // Apply points (1 point = 1 VND discount)
-  let pointsDiscount = 0;
-  if (usePoints) {
-    const pointsToUse = Math.min(buyerPoints, totalAfterSub);
-    pointsDiscount = pointsToUse;
-  }
 
-  const shippingFee = activeSub ? 0 : 30000;
-  const finalTotal = Math.max(0, totalAfterSub + shippingFee - pointsDiscount);
+  const shippingFee = activeSub ? 0 : 25000;
+  const finalTotal = Math.max(0, totalAfterSub + shippingFee);
+  const requiredDeposit = hasCustomEngravedRuler ? Math.round(finalTotal * 0.5) : 0;
+
+  const handleTriggerCheckoutPayOS = () => {
+    if (hasCustomEngravedRuler && !isDepositAgreed) {
+      setShowDepositFrictionPopup(true);
+      return;
+    }
+    setShowPayOS(true);
+  };
+
+  const handleConfirmPayOSPayment = () => {
+    setShowPayOS(false);
+    handleCheckout('PAYOS');
+  };
+
+  const handleConfirmCODPayment = () => {
+    if (hasCustomEngravedRuler) {
+      alert('Sản phẩm có khắc tên riêng bắt buộc đặt cọc trước qua PayOS để xưởng bắt đầu in 3D!');
+      return;
+    }
+    handleCheckout('COD');
+  };
 
   if (cart.length === 0) {
     return (
       <div style={{ padding: '64px 24px', textAlign: 'center', maxWidth: '800px', margin: '0 auto' }}>
-        <h1 style={{ fontSize: '24px', marginBottom: '16px' }}>Giỏ hàng</h1>
+        <h1 style={{ fontSize: '24px', marginBottom: '16px' }}>Giỏ hàng Bộ Thước Kẻ</h1>
         <div style={{ padding: '48px', background: 'var(--surface)', borderRadius: '12px', border: '1px solid var(--border)' }}>
           <ShoppingBag size={48} style={{ color: 'var(--text-muted)', margin: '0 auto 16px' }} />
-          <p style={{ color: 'var(--text-secondary)' }}>Giỏ hàng của bạn đang trống.</p>
+          <p style={{ color: 'var(--text-secondary)' }}>Giỏ hàng của bạn chưa có bộ thước kẻ nào.</p>
         </div>
       </div>
     );
@@ -58,53 +71,63 @@ export const CartPage: React.FC = () => {
 
   return (
     <div style={{ padding: '32px 24px', maxWidth: '1200px', margin: '0 auto' }}>
-      <h1 style={{ fontSize: '28px', marginBottom: '24px' }}>Giỏ hàng của bạn</h1>
-      
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: '32px' }}>
-        {/* Cart Items List */}
+      <h1 style={{ fontSize: '26px', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <ShoppingBag size={28} className="logo-accent" />
+        Giỏ hàng & Đặt cọc Bộ Thước Kẻ 3D
+      </h1>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 400px', gap: '32px' }}>
+        {/* Left: Cart Items List */}
         <div>
           <div style={{ background: 'var(--surface)', borderRadius: '12px', border: '1px solid var(--border)', padding: '24px' }}>
-            {cart.map((item) => (
+            {cart.map((item, idx) => (
               <div
-                key={item.product.id}
+                key={idx}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '24px',
-                  borderBottom: '1px solid var(--border)',
-                  paddingBottom: '24px',
-                  marginBottom: '24px'
+                  gap: '20px',
+                  borderBottom: idx === cart.length - 1 ? 'none' : '1px solid var(--border)',
+                  paddingBottom: '20px',
+                  marginBottom: '20px'
                 }}
               >
                 <img
                   src={item.product.image}
                   alt={item.product.name}
-                  style={{ width: '100px', height: '100px', objectFit: 'cover', borderRadius: '8px' }}
+                  style={{ width: '90px', height: '90px', objectFit: 'cover', borderRadius: '8px', border: '1px solid var(--border)' }}
                 />
                 <div style={{ flex: 1 }}>
-                  <h3 style={{ margin: '0 0 8px 0', fontSize: '18px' }}>{item.product.name}</h3>
-                  {(item.selectedColor || item.selectedMaterial) && (
-                    <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '8px' }}>
-                      Cấu hình: {item.selectedColor} | Nhựa {item.selectedMaterial}
+                  <h3 style={{ margin: '0 0 6px 0', fontSize: '16px', color: '#FFF' }}>{item.product.name}</h3>
+
+                  {/* Engraving & Color Details */}
+                  <div style={{ background: 'var(--bg-secondary)', padding: '8px 12px', borderRadius: '6px', fontSize: '12px', marginBottom: '8px' }}>
+                    <div style={{ color: '#39FF14', fontWeight: 'bold' }}>
+                      ✨ Khắc tên: {item.engravingText || 'Mặc định (Không khắc tên)'}
                     </div>
-                  )}
-                  <div style={{ fontFamily: 'var(--mono)', fontSize: '16px', color: 'var(--primary)', fontWeight: 'bold' }}>
-                    {item.product.price.toLocaleString()}đ
+                    <div style={{ color: 'var(--text-secondary)' }}>
+                      Màu nhựa: {item.selectedColor || 'Neon Green'} | Công thức: {item.subjectFormula || 'Toán 12'}
+                    </div>
+                  </div>
+
+                  <div style={{ fontFamily: 'var(--mono)', fontSize: '15px', color: 'var(--primary)', fontWeight: 'bold' }}>
+                    {item.product.price.toLocaleString()}đ x {item.quantity} = {(item.product.price * item.quantity).toLocaleString()}đ
                   </div>
                 </div>
+
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', background: 'var(--background)', borderRadius: '6px', border: '1px solid var(--border)' }}>
                     <button
                       className="btn"
-                      style={{ padding: '8px 12px', border: 'none', background: 'transparent' }}
+                      style={{ padding: '6px 10px', border: 'none', background: 'transparent' }}
                       onClick={() => handleUpdateCartQuantity(item.product.id, item.quantity - 1)}
                     >
                       -
                     </button>
-                    <span style={{ padding: '0 12px', fontWeight: '500' }}>{item.quantity}</span>
+                    <span style={{ padding: '0 8px', fontSize: '14px', fontFamily: 'var(--mono)' }}>{item.quantity}</span>
                     <button
                       className="btn"
-                      style={{ padding: '8px 12px', border: 'none', background: 'transparent' }}
+                      style={{ padding: '6px 10px', border: 'none', background: 'transparent' }}
                       onClick={() => handleUpdateCartQuantity(item.product.id, item.quantity + 1)}
                     >
                       +
@@ -112,11 +135,10 @@ export const CartPage: React.FC = () => {
                   </div>
                   <button
                     className="btn"
-                    style={{ padding: '8px', color: '#ff3b30', background: 'rgba(255, 59, 48, 0.1)' }}
+                    style={{ color: '#ff3b30', padding: '8px' }}
                     onClick={() => handleRemoveFromCart(item.product.id)}
-                    title="Xóa sản phẩm"
                   >
-                    <Trash2 size={20} />
+                    <Trash2 size={18} />
                   </button>
                 </div>
               </div>
@@ -124,154 +146,119 @@ export const CartPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Order Summary & Checkout */}
+        {/* Right: Order Summary & PayOS Deposit Trigger */}
         <div>
-          <div style={{ background: 'var(--surface)', borderRadius: '12px', border: '1px solid var(--border)', padding: '24px', position: 'sticky', top: '24px' }}>
-            <h2 style={{ fontSize: '20px', marginBottom: '24px' }}>Tóm tắt đơn hàng</h2>
-            
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px', color: 'var(--text-secondary)' }}>
-              <span>Tạm tính ({cart.length} sản phẩm):</span>
-              <span>{subtotal.toLocaleString()}đ</span>
+          <div style={{ background: 'var(--surface)', borderRadius: '12px', border: '1px solid var(--border)', padding: '24px' }}>
+            <h2 style={{ fontSize: '18px', marginBottom: '16px' }}>Tóm tắt đơn hàng</h2>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', fontSize: '14px' }}>
+              <span style={{ color: 'var(--text-secondary)' }}>Tạm tính ({cart.length} sản phẩm):</span>
+              <span style={{ fontFamily: 'var(--mono)' }}>{subtotal.toLocaleString()}đ</span>
             </div>
 
-            {activeSub && (
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px', color: '#34c759' }}>
-                <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <Gift size={16} /> Ưu đãi hội viên ({discountPercentage * 100}%):
-                </span>
-                <span>-{subDiscount.toLocaleString()}đ</span>
+            {subDiscount > 0 && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', fontSize: '14px', color: '#39FF14' }}>
+                <span>Ưu đãi VIP (Giảm {discountPercentage * 100}%):</span>
+                <span style={{ fontFamily: 'var(--mono)' }}>-{subDiscount.toLocaleString()}đ</span>
               </div>
             )}
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px', color: 'var(--text-secondary)' }}>
-              <span>Phí vận chuyển:</span>
-              <span>{shippingFee === 0 ? <span style={{ color: '#34c759' }}>Miễn phí (VIP)</span> : `${shippingFee.toLocaleString()}đ`}</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', fontSize: '14px' }}>
+              <span style={{ color: 'var(--text-secondary)' }}>Phí vận chuyển giao tận nơi:</span>
+              <span style={{ fontFamily: 'var(--mono)' }}>{shippingFee === 0 ? 'Miễn phí' : `${shippingFee.toLocaleString()}đ`}</span>
             </div>
 
-            {buyerPoints > 0 && (
-              <div style={{ padding: '16px', background: 'rgba(175, 82, 222, 0.05)', borderRadius: '8px', border: '1px dashed rgba(175, 82, 222, 0.3)', marginBottom: '16px' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', margin: 0 }}>
-                  <input 
-                    type="checkbox" 
-                    checked={usePoints} 
-                    onChange={(e) => setUsePoints(e.target.checked)} 
-                    style={{ width: '18px', height: '18px', accentColor: '#af52de' }}
+            {/* Custom Engraving Deposit Alert */}
+            {hasCustomEngravedRuler && (
+              <div style={{ background: 'rgba(255, 64, 129, 0.1)', border: '1px solid #FF4081', padding: '12px', borderRadius: '8px', marginBottom: '16px', fontSize: '12px' }}>
+                <div style={{ color: '#FF4081', fontWeight: 'bold', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <ShieldAlert size={16} /> Yêu cầu Đặt cọc PayOS (50%):
+                </div>
+                <div style={{ color: 'var(--text-secondary)' }}>
+                  Sản phẩm khắc tên riêng cần thanh toán giữ cọc tối thiểu <strong style={{ color: '#FFF' }}>{requiredDeposit.toLocaleString()}đ</strong> để xưởng bắt đầu in 3D.
+                </div>
+              </div>
+            )}
+
+            <div style={{ borderTop: '1px solid var(--border)', paddingTop: '16px', marginTop: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: '16px', fontWeight: 'bold' }}>Tổng cộng:</span>
+              <span style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--primary)', fontFamily: 'var(--mono)' }}>
+                {finalTotal.toLocaleString()}đ
+              </span>
+            </div>
+
+            {/* PayOS Deposit Checkbox Consent */}
+            {hasCustomEngravedRuler && (
+              <div style={{ marginTop: '16px', padding: '12px', background: 'var(--bg-secondary)', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                <label style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', cursor: 'pointer', fontSize: '11px', color: 'var(--text-secondary)' }}>
+                  <input
+                    type="checkbox"
+                    checked={isDepositAgreed}
+                    onChange={(e) => setIsDepositAgreed(e.target.checked)}
+                    style={{ marginTop: '2px' }}
                   />
-                  <span style={{ fontSize: '14px' }}>
-                    Dùng điểm thưởng <br/>
-                    <small style={{ color: 'var(--text-secondary)' }}>Bạn có {buyerPoints.toLocaleString()} điểm (Tương đương {buyerPoints.toLocaleString()}đ)</small>
+                  <span>
+                    <strong>Tôi đồng ý thanh toán giữ cọc và hiểu rõ</strong> sẽ mất tiền cọc sản phẩm thô nếu tự ý hủy/bom đơn sản phẩm khắc tên riêng.
                   </span>
                 </label>
               </div>
             )}
 
-            {usePoints && pointsDiscount > 0 && (
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px', color: '#af52de' }}>
-                <span>Trừ điểm thưởng:</span>
-                <span>-{pointsDiscount.toLocaleString()}đ</span>
-              </div>
-            )}
+            {/* Payment CTAs */}
+            <div style={{ marginTop: '24px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <button
+                className="btn btn-primary"
+                style={{ width: '100%', padding: '14px', fontSize: '15px', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}
+                onClick={handleTriggerCheckoutPayOS}
+              >
+                <Lock size={18} /> {hasCustomEngravedRuler ? `Thanh Toán Cọc qua PayOS (${requiredDeposit.toLocaleString()}đ)` : 'Thanh Toán qua PayOS'}
+              </button>
 
-            <div style={{ borderTop: '1px solid var(--border)', margin: '16px 0' }}></div>
-            
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px', alignItems: 'center' }}>
-              <span style={{ fontSize: '16px', fontWeight: 'bold' }}>Tổng cộng:</span>
-              <span style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--primary)' }}>
-                {finalTotal.toLocaleString()}đ
-              </span>
-            </div>
-
-            <button
-              className="btn btn-primary"
-              style={{ width: '100%', marginBottom: '12px', padding: '16px', fontSize: '16px', backgroundColor: '#111', color: '#fff', borderColor: '#111' }}
-              onClick={() => {
-                setMethodToConfirm('PAYOS');
-                setShowConfirm(true);
-              }}
-            >
-              Thanh toán qua PayOS
-            </button>
-            <button
-              className="btn btn-secondary"
-              style={{ width: '100%', padding: '16px', fontSize: '16px' }}
-              onClick={() => {
-                setMethodToConfirm('COD');
-                setShowConfirm(true);
-              }}
-            >
-              Thanh toán khi nhận hàng (COD)
-            </button>
-
-            <div style={{ marginTop: '24px', fontSize: '13px', color: 'var(--text-muted)', display: 'flex', gap: '8px' }}>
-              <ShieldCheck size={24} style={{ flexShrink: 0 }} />
-              <div>
-                Thanh toán an toàn. Tiền của bạn được PrintHub giữ an toàn cho đến khi nhận được sản phẩm.
-              </div>
+              {!hasCustomEngravedRuler && (
+                <button
+                  className="btn btn-secondary"
+                  style={{ width: '100%', padding: '12px', fontSize: '14px' }}
+                  onClick={handleConfirmCODPayment}
+                >
+                  Thanh Toán Khi Nhận Hàng (COD)
+                </button>
+              )}
             </div>
           </div>
         </div>
       </div>
 
-      {showPayOS && (
-        <PayOSMockModal
-          amount={finalTotal}
-          onSuccess={() => {
-            setShowPayOS(false);
-            if (usePoints && pointsDiscount > 0) setBuyerPoints(prev => prev - pointsDiscount);
-            handleCheckout('PAYOS', finalTotal, shippingFee);
-          }}
-          onCancel={() => setShowPayOS(false)}
-        />
-      )}
-
-      {showConfirm && (
-        <div className="modal-overlay" style={{ zIndex: 1100 }}>
-          <div className="modal-content" style={{ maxWidth: '400px', padding: '32px', textAlign: 'center' }}>
-            <h3 style={{ marginBottom: '16px', color: '#ff3b30' }}>⚠️ Cảnh báo thanh toán</h3>
-            <p style={{ fontSize: '14px', color: 'var(--text-secondary)', lineHeight: '1.6', marginBottom: '24px' }}>
-              {methodToConfirm === 'COD' ? (
-                <span>
-                  Bạn đang thực hiện đặt hàng với hình thức <strong>Thanh toán khi nhận hàng (COD)</strong>. <br/>
-                  Tổng số tiền cần thanh toán khi nhận hàng: <strong>{finalTotal.toLocaleString()}đ</strong>. <br/><br/>
-                  Vui lòng xác nhận rằng thông tin đơn hàng và địa chỉ giao nhận của bạn đã chính xác.
-                </span>
-              ) : (
-                <span>
-                  Bạn đang thực hiện đặt hàng và thanh toán số tiền <strong>{finalTotal.toLocaleString()}đ</strong> qua cổng PayOS. <br/><br/>
-                  Vui lòng xác nhận rằng thông tin đơn hàng và địa chỉ giao nhận của bạn đã chính xác. Sau khi xác nhận, bạn sẽ chuyển sang cổng thanh toán PayOS.
-                </span>
-              )}
+      {/* Deposit Friction Modal */}
+      {showDepositFrictionPopup && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ maxWidth: '480px', padding: '24px', textAlign: 'center' }}>
+            <ShieldAlert size={48} style={{ color: '#FF4081', margin: '0 auto 12px' }} />
+            <h3 style={{ fontSize: '18px', marginBottom: '8px', color: '#FFF' }}>Xác Nhận Cam Kết Đặt Cọc</h3>
+            <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '20px' }}>
+              Thước kẻ in 3D có khắc tên riêng là sản phẩm cá nhân hóa không thể bán lại cho người khác. Vui lòng tích chọn cam kết mất cọc nếu tự ý hủy đơn trước khi quét mã VietQR PayOS.
             </p>
-            <div style={{ display: 'flex', gap: '12px' }}>
-              <button 
-                className="btn btn-secondary" 
-                style={{ flex: 1 }} 
-                onClick={() => {
-                  setShowConfirm(false);
-                  setMethodToConfirm(null);
-                }}
-              >
-                Hủy bỏ
-              </button>
-              <button 
-                className="btn btn-primary" 
-                style={{ flex: 1, backgroundColor: '#ff3b30', borderColor: '#ff3b30', color: '#fff' }} 
-                onClick={() => {
-                  setShowConfirm(false);
-                  if (methodToConfirm === 'PAYOS') {
-                    setShowPayOS(true);
-                  } else if (methodToConfirm === 'COD') {
-                    if (usePoints && pointsDiscount > 0) setBuyerPoints(prev => prev - pointsDiscount);
-                    handleCheckout('COD', finalTotal, shippingFee);
-                  }
-                  setMethodToConfirm(null);
-                }}
-              >
-                Xác nhận
-              </button>
-            </div>
+            <button
+              className="btn btn-primary"
+              style={{ width: '100%', padding: '12px' }}
+              onClick={() => {
+                setIsDepositAgreed(true);
+                setShowDepositFrictionPopup(false);
+                setShowPayOS(true);
+              }}
+            >
+              Tôi Đã Hiểu & Tiếp Tục Đặt Cọc
+            </button>
           </div>
         </div>
+      )}
+
+      {/* PayOS QR Modal */}
+      {showPayOS && (
+        <PayOSMockModal
+          amount={requiredDeposit > 0 ? requiredDeposit : finalTotal}
+          onCancel={() => setShowPayOS(false)}
+          onSuccess={handleConfirmPayOSPayment}
+        />
       )}
     </div>
   );

@@ -5,10 +5,13 @@ export interface Product {
   price: number;
   stock: number;
   image: string;
-  makerName: string;
-  makerId: number;
+  makerName?: string;
+  makerId?: number;
   description: string;
   category: string;
+  isCustomizable?: boolean;
+  availableColors?: string[];
+  subjectFormula?: string;
   licenseType?: 'PERSONAL' | 'COMMERCIAL';
   downloadCount?: number;
   originalUrl?: string;
@@ -20,6 +23,10 @@ export interface CartItem {
   quantity: number;
   selectedColor?: string;
   selectedMaterial?: string;
+  engravingText?: string;
+  subjectFormula?: string;
+  isBulkOrder?: boolean;
+  bulkStudentList?: { name: string; color: string; classId?: string }[];
 }
 
 export interface Address {
@@ -36,13 +43,16 @@ export interface Order {
   items: CartItem[];
   totalAmount: number;
   commissionFee: number;
-  status: 'PENDING' | 'PROCESSING' | 'SHIPPED' | 'COMPLETED' | 'CANCELLED';
+  status: 'PENDING' | 'PENDING_DEPOSIT' | 'PROCESSING' | 'PRINTING' | 'SHIPPED' | 'COMPLETED' | 'WARRANTY_CLAIM' | 'CANCELLED';
   trackingNumber?: string;
   shippingAddress: Address;
   date: string;
   paymentMethod: string;
   isReviewed?: boolean;
   shippingFee?: number;
+  depositAmount?: number;
+  isCustomized?: boolean;
+  warrantyToken?: string;
 }
 
 export interface CustomOrderMessage {
@@ -63,20 +73,24 @@ export interface CustomOrder {
   material?: string;
   quantity?: number;
   quotedPrice?: number;
-  status: 'REQUESTED' | 'PICKED' | 'QUOTED' | 'ACCEPTED' | 'PRINTING' | 'COMPLETED' | 'CANCELLED';
+  status: 'REQUESTED' | 'PICKED' | 'QUOTED' | 'ACCEPTED' | 'PENDING_DEPOSIT' | 'DEPOSITED' | 'PRINTING' | 'PACKAGED' | 'SHIPPED' | 'COMPLETED' | 'WARRANTY_REQUEST' | 'CANCELLED';
   printProofImage?: string;
   printProofNote?: string;
   messages?: CustomOrderMessage[];
   date: string;
-  infill?: string;
-  resolution?: string;
   color?: string;
-  finish?: string;
-  priority?: string;
-  sizeScale?: string;
+  engravingText?: string;
+  subjectFormula?: string;
   depositPercentage?: number;
   depositAmount?: number;
   paymentType?: 'DEPOSIT' | 'FULL';
+  isBulkOrder?: boolean;
+  bulkStudentList?: { name: string; color: string; classId?: string }[];
+  infill?: string;
+  resolution?: string;
+  finish?: string;
+  priority?: string;
+  sizeScale?: string;
 }
 
 export interface WalletTransaction {
@@ -92,12 +106,12 @@ export interface Dispute {
   orderId: string;
   reason: string;
   evidenceUrl: string;
-  makerEvidenceUrl?: string;
   status: 'OPEN' | 'RESOLVED';
   refundAmount?: number;
   refundType?: 'FULL' | 'PARTIAL' | 'NONE';
   date: string;
   messages: { sender: string; text: string; date: string }[];
+  replacementOrderCreated?: boolean;
 }
 
 export interface AppNotification {
@@ -109,25 +123,25 @@ export interface AppNotification {
   date: string;
 }
 
-export type SubscriptionType = 'CUSTOMER' | 'MAKER';
+export type SubscriptionType = 'CUSTOMER';
 
 export interface SubscriptionPlan {
-  id: string; // UUID
+  id: string;
   type: SubscriptionType;
   name: string;
-  price: number; // BigDecimal
+  price: number;
   benefits: string;
-  requiredPoints?: number; // integer (Maker plan can be blank/null)
+  requiredPoints?: number;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
 }
 
 export interface UserSubscription {
-  subscriptionId: string; // UUID
-  userId: string; // UUID
+  subscriptionId: string;
+  userId: string;
   username: string;
-  planId: string; // UUID
+  planId: string;
   planName: string;
   planType: SubscriptionType;
   startDate: string;
@@ -136,14 +150,14 @@ export interface UserSubscription {
 }
 
 export interface MockUser {
-  id: string; // UUID
+  id: string;
   name: string;
-  role: 'BUYER' | 'MAKER';
+  role: 'BUYER' | 'ADMIN';
 }
 
 export interface GiftSubscriptionRequest {
-  userId: string; // UUID
-  planId: string; // UUID
+  userId: string;
+  planId: string;
   reason: string;
 }
 
@@ -153,4 +167,3 @@ export interface SubscriptionPlanRequest {
   benefits: string;
   requiredPoints?: number;
 }
-

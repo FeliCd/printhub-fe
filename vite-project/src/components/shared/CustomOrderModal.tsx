@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Send } from 'lucide-react';
+import { X, Upload, FileSpreadsheet, Download } from 'lucide-react';
 
 interface CustomOrderModalProps {
   onClose: () => void;
@@ -9,239 +9,200 @@ interface CustomOrderModalProps {
     category: string;
     material: string;
     quantity: number;
-    infill?: string;
-    resolution?: string;
     color?: string;
-    finish?: string;
-    priority?: string;
-    sizeScale?: string;
+    isBulkOrder?: boolean;
+    bulkStudentList?: { name: string; color: string; classId?: string }[];
   }) => void;
 }
 
 export const CustomOrderModal: React.FC<CustomOrderModalProps> = ({ onClose, onSubmit }) => {
-  const [requirements, setRequirements] = useState('');
-  const [attachmentUrl, setAttachmentUrl] = useState('');
-  const [category, setCategory] = useState('Cơ khí');
-  const [material, setMaterial] = useState('PLA');
-  const [quantity, setQuantity] = useState(1);
-  
-  // New 3D printing options
-  const [infill, setInfill] = useState('15% (Tiêu chuẩn)');
-  const [resolution, setResolution] = useState('0.20mm (Tiêu chuẩn)');
-  const [color, setColor] = useState('Đen');
-  const [finish, setFinish] = useState('Để mộc (Mộc)');
-  const [priority, setPriority] = useState('Tiêu chuẩn (3-5 ngày)');
-  const [sizeScale, setSizeScale] = useState('Tỉ lệ 100% gốc');
+  const [className, setClassName] = useState('Lớp 12A1 - Chuyên Toán');
+  const [schoolName, setSchoolName] = useState('THPT Chuyên Nguyễn Bỉnh Khiêm');
+  const [quantity, setQuantity] = useState(35);
+  const [defaultColor] = useState('Neon Green (#39FF14)');
+  const [importedList, setImportedList] = useState<{ name: string; color: string; classId?: string }[]>([
+    { name: 'Nguyễn Văn Anh', color: 'Neon Green', classId: '12A1' },
+    { name: 'Trần Minh Tuấn', color: 'Đen Nhám', classId: '12A1' },
+    { name: 'Lê Thị Hương', color: 'Hồng Pastel', classId: '12A1' },
+    { name: 'Phạm Đức Long', color: 'Xanh Cyan', classId: '12A1' },
+    { name: 'Hoàng Quốc Việt', color: 'Neon Green', classId: '12A1' },
+  ]);
+  const [fileName, setFileName] = useState('Danh_Sach_Khac_Ten_Lop_12A1.xlsx');
+  const [notes, setNotes] = useState('Khắc thêm Logo Lớp 12A1 phía góc phải thước thẳng.');
+
+  const unitPrice = 45000;
+  const discountRate = quantity >= 40 ? 0.15 : quantity >= 20 ? 0.10 : 0.05;
+  const rawTotal = quantity * unitPrice;
+  const discountAmount = Math.round(rawTotal * discountRate);
+  const finalTotal = rawTotal - discountAmount;
+
+  const handleSimulateExcelUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setFileName(file.name);
+      setImportedList([
+        { name: 'Nguyễn Văn Anh', color: 'Neon Green', classId: '12A1' },
+        { name: 'Trần Minh Tuấn', color: 'Đen Nhám', classId: '12A1' },
+        { name: 'Lê Thị Hương', color: 'Hồng Pastel', classId: '12A1' },
+        { name: 'Phạm Đức Long', color: 'Xanh Cyan', classId: '12A1' },
+        { name: 'Hoàng Quốc Việt', color: 'Neon Green', classId: '12A1' },
+        { name: 'Đặng Mai Phương', color: 'Trắng Sứ', classId: '12A1' },
+        { name: 'Bùi Hoàng Nam', color: 'Neon Green', classId: '12A1' },
+      ]);
+      setQuantity(35);
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!requirements) return;
     onSubmit({
-      requirements,
-      attachmentUrl,
-      category,
-      material,
-      quantity,
-      infill,
-      resolution,
-      color,
-      finish,
-      priority,
-      sizeScale
+      requirements: `[ĐƠN SỈ LỚP/CLB] ${className} - ${schoolName}. Ghi chú: ${notes}`,
+      attachmentUrl: fileName,
+      category: 'Đơn sỉ Lớp / CLB',
+      material: 'PLA In 3D 100% (Khắc Laser)',
+      quantity: quantity,
+      color: defaultColor,
+      isBulkOrder: true,
+      bulkStudentList: importedList,
     });
   };
 
   return (
     <div className="modal-overlay">
-      <div className="modal-content" style={{ maxWidth: '640px', padding: '24px', maxHeight: '90vh', overflowY: 'auto' }}>
+      <div className="modal-content" style={{ maxWidth: '720px', padding: '24px', maxHeight: '90vh', overflowY: 'auto' }}>
         <button className="modal-close" onClick={onClose}>
           <X size={20} />
         </button>
-        <h2 style={{ marginBottom: '4px', fontSize: '20px' }}>Tạo yêu cầu in 3D theo thiết kế riêng</h2>
+        <h2 style={{ marginBottom: '4px', fontSize: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <FileSpreadsheet className="logo-accent" size={24} />
+          Đặt Sỉ Bộ Thước Kẻ Cho Lớp / CLB (Import Excel)
+        </h2>
         <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '20px' }}>
-          Thiết lập cấu hình in chi tiết để nhận báo giá chính xác nhất từ các Nhà in (Maker).
+          Tải file mẫu Excel, điền danh sách học sinh + màu sắc chọn, sau đó upload lên web để nhận chiết khấu sỉ lên tới 15%.
         </p>
-        
+
         <form onSubmit={handleSubmit}>
-          {/* Row 1: Category & Material */}
-          <div className="form-control-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '12px' }}>
-            <div className="form-group" style={{ margin: 0 }}>
-              <label style={{ fontSize: '12px', marginBottom: '4px' }}>Danh mục in ấn</label>
-              <select
-                className="form-control"
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                style={{ padding: '8px' }}
-              >
-                <option value="Cơ khí">Cơ khí / Linh kiện</option>
-                <option value="Trang trí">Trang trí / Decor</option>
-                <option value="Cosplay">Cosplay / Đồ chơi</option>
-                <option value="Gadget">Gadget / Thiết bị</option>
-                <option value="Linh kiện máy in">Linh kiện máy in 3D</option>
-                <option value="Kiến trúc">Mô hình kiến trúc</option>
-                <option value="Khác">Khác</option>
-              </select>
-            </div>
-            
-            <div className="form-group" style={{ margin: 0 }}>
-              <label style={{ fontSize: '12px', marginBottom: '4px' }}>Vật liệu nhựa in</label>
-              <select
-                className="form-control"
-                value={material}
-                onChange={(e) => setMaterial(e.target.value)}
-                style={{ padding: '8px' }}
-              >
-                <option value="PLA">PLA (Phổ biến, dễ in)</option>
-                <option value="ABS">ABS (Chịu lực, chịu nhiệt)</option>
-                <option value="PETG">PETG (Bền bỉ, chịu nước)</option>
-                <option value="Nylon-CF">Nylon-CF (Cực chịu lực)</option>
-                <option value="TPU">TPU (Nhựa dẻo, đàn hồi)</option>
-                <option value="Resin">Resin (Độ chi tiết siêu cao)</option>
-                <option value="Không chỉ định">Không chỉ định (Maker tự tư vấn)</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Row 2: Infill & Resolution */}
-          <div className="form-control-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '12px' }}>
-            <div className="form-group" style={{ margin: 0 }}>
-              <label style={{ fontSize: '12px', marginBottom: '4px' }}>Độ đặc ruột (Infill Density)</label>
-              <select
-                className="form-control"
-                value={infill}
-                onChange={(e) => setInfill(e.target.value)}
-                style={{ padding: '8px' }}
-              >
-                <option value="15% (Tiêu chuẩn)">15% (Tiêu chuẩn/Trưng bày)</option>
-                <option value="30% (Chắc chắn)">30% (Chắc chắn/Mô hình khớp)</option>
-                <option value="50% (Chịu lực tốt)">50% (Chịu lực tốt/Bánh răng)</option>
-                <option value="100% (Đặc hoàn toàn)">100% (Đặc hoàn toàn/Cơ cấu máy)</option>
-              </select>
-            </div>
-            
-            <div className="form-group" style={{ margin: 0 }}>
-              <label style={{ fontSize: '12px', marginBottom: '4px' }}>Độ dày lớp / Độ phân giải</label>
-              <select
-                className="form-control"
-                value={resolution}
-                onChange={(e) => setResolution(e.target.value)}
-                style={{ padding: '8px' }}
-              >
-                <option value="0.20mm (Tiêu chuẩn)">0.20mm (Tiêu chuẩn - Đẹp & Nhanh)</option>
-                <option value="0.12mm (Mịn)">0.12mm (Mịn - Chi tiết rõ nét)</option>
-                <option value="0.28mm (Thô)">0.28mm (Thô - Tối ưu thời gian)</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Row 3: Color & Surface Finish */}
-          <div className="form-control-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '12px' }}>
-            <div className="form-group" style={{ margin: 0 }}>
-              <label style={{ fontSize: '12px', marginBottom: '4px' }}>Màu sắc yêu cầu</label>
-              <select
-                className="form-control"
-                value={color}
-                onChange={(e) => setColor(e.target.value)}
-                style={{ padding: '8px' }}
-              >
-                <option value="Đen">Đen (Black)</option>
-                <option value="Trắng">Trắng (White)</option>
-                <option value="Đỏ">Đỏ (Red)</option>
-                <option value="Xanh lá">Xanh lá (Green)</option>
-                <option value="Xanh dương">Xanh dương (Blue)</option>
-                <option value="Xám">Xám (Grey)</option>
-                <option value="Trong suốt">Trong suốt (Clear)</option>
-                <option value="Theo tư vấn">Maker tự đề xuất màu</option>
-              </select>
-            </div>
-            
-            <div className="form-group" style={{ margin: 0 }}>
-              <label style={{ fontSize: '12px', marginBottom: '4px' }}>Xử lý bề mặt (Surface Finish)</label>
-              <select
-                className="form-control"
-                value={finish}
-                onChange={(e) => setFinish(e.target.value)}
-                style={{ padding: '8px' }}
-              >
-                <option value="Để mộc (Mộc)">Để mộc (FDM standard - mộc giá rẻ)</option>
-                <option value="Đánh bóng mịn (Sanding)">Đánh bóng chà nhám (Smooth finish)</option>
-                <option value="Sơn lót / Sơn màu">Sơn lót & Sơn màu theo thiết kế</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Row 4: Priority & Quantity */}
-          <div className="form-control-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '12px' }}>
-            <div className="form-group" style={{ margin: 0 }}>
-              <label style={{ fontSize: '12px', marginBottom: '4px' }}>Độ ưu tiên đơn hàng</label>
-              <select
-                className="form-control"
-                value={priority}
-                onChange={(e) => setPriority(e.target.value)}
-                style={{ padding: '8px' }}
-              >
-                <option value="Tiêu chuẩn (3-5 ngày)">Tiêu chuẩn (3-5 ngày)</option>
-                <option value="Hỏa tốc (1-2 ngày)">Hỏa tốc (1-2 ngày - Phụ phí +20%)</option>
-              </select>
-            </div>
-            
-            <div className="form-group" style={{ margin: 0 }}>
-              <label style={{ fontSize: '12px', marginBottom: '4px' }}>Số lượng sản phẩm</label>
+          {/* Step 1: Form Information */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+            <div>
+              <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>Tên Lớp / CLB / Đơn vị:</label>
               <input
-                type="number"
-                className="form-control"
-                value={quantity}
-                onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-                min={1}
+                type="text"
+                className="input"
+                value={className}
+                onChange={(e) => setClassName(e.target.value)}
+                style={{ width: '100%' }}
                 required
-                style={{ padding: '8px' }}
+              />
+            </div>
+            <div>
+              <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>Trường học / Địa chỉ giao:</label>
+              <input
+                type="text"
+                className="input"
+                value={schoolName}
+                onChange={(e) => setSchoolName(e.target.value)}
+                style={{ width: '100%' }}
+                required
               />
             </div>
           </div>
 
-          {/* Row 5: Size/Scale & Attachment URL */}
-          <div className="form-control-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '12px' }}>
-            <div className="form-group" style={{ margin: 0 }}>
-              <label style={{ fontSize: '12px', marginBottom: '4px' }}>Kích thước / Tỉ lệ in</label>
-              <input
-                type="text"
-                className="form-control"
-                value={sizeScale}
-                onChange={(e) => setSizeScale(e.target.value)}
-                placeholder="Ví dụ: Tỉ lệ 100% gốc, Cao 15cm..."
-                style={{ padding: '8px' }}
-              />
+          {/* Step 2: Download Template & Excel Upload */}
+          <div style={{ background: 'var(--bg-secondary)', border: '1px dashed var(--primary)', borderRadius: '8px', padding: '16px', marginBottom: '16px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+              <div>
+                <strong style={{ fontSize: '13px', color: '#FFF' }}>1. Tải File Mẫu Excel Danh Sách Học Sinh</strong>
+                <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Mẫu gồm các cột: STT, Họ và tên, Lớp, Màu sắc nhựa chọn</div>
+              </div>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                style={{ fontSize: '12px', padding: '6px 12px', gap: '6px' }}
+                onClick={() => alert('Đang tải file Mau_Khac_Ten_Thuoc_Ke_PrintHub3D.xlsx...')}
+              >
+                <Download size={14} /> Tải File Excel Mẫu
+              </button>
             </div>
 
-            <div className="form-group" style={{ margin: 0 }}>
-              <label style={{ fontSize: '12px', marginBottom: '4px' }}>File bản vẽ / thiết kế đính kèm</label>
-              <input
-                type="text"
-                className="form-control"
-                value={attachmentUrl}
-                onChange={(e) => setAttachmentUrl(e.target.value)}
-                placeholder="Ví dụ: robot_hand_blueprint.stl"
-                style={{ padding: '8px' }}
-              />
+            <div style={{ borderTop: '1px solid var(--border)', paddingTop: '12px' }}>
+              <strong style={{ fontSize: '13px', color: '#FFF', display: 'block', marginBottom: '8px' }}>
+                2. Upload File Excel Danh Sách Đã Điền
+              </strong>
+              <label
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  background: 'rgba(57, 255, 20, 0.08)',
+                  border: '1px solid #39FF14',
+                  padding: '12px',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '13px',
+                  color: '#39FF14'
+                }}
+              >
+                <Upload size={18} />
+                <span>{fileName ? `Đã chọn: ${fileName}` : 'Bấm vào đây để chọn file .XLSX / .CSV'}</span>
+                <input type="file" accept=".xlsx, .xls, .csv" onChange={handleSimulateExcelUpload} style={{ display: 'none' }} />
+              </label>
             </div>
           </div>
 
-          {/* Descriptive textarea */}
-          <div className="form-group" style={{ marginBottom: '16px' }}>
-            <label style={{ fontSize: '12px', marginBottom: '4px' }}>Mô tả chi tiết yêu cầu bổ sung</label>
+          {/* Step 3: Imported Preview */}
+          {importedList.length > 0 && (
+            <div style={{ marginBottom: '16px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                <span style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--primary)', textTransform: 'uppercase' }}>
+                  Xem trước danh sách parsed từ Excel ({quantity} bạn):
+                </span>
+                <span style={{ fontSize: '11px', color: '#39FF14' }}>
+                  Chiết khấu sỉ: -{discountRate * 100}%
+                </span>
+              </div>
+              <div style={{ maxHeight: '120px', overflowY: 'auto', background: '#000', padding: '8px 12px', borderRadius: '6px', border: '1px solid var(--border)', fontSize: '12px' }}>
+                {importedList.map((st, i) => (
+                  <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', borderBottom: '1px solid #222' }}>
+                    <span>{i + 1}. {st.name} ({st.classId || className})</span>
+                    <span style={{ color: 'var(--text-muted)' }}>Màu: {st.color}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Pricing summary */}
+          <div style={{ background: 'var(--surface)', padding: '12px 16px', borderRadius: '8px', border: '1px solid var(--border)', marginBottom: '16px', fontSize: '13px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+              <span>Tổng đơn giá gốc ({quantity} bộ x 45k):</span>
+              <span style={{ fontFamily: 'var(--mono)' }}>{rawTotal.toLocaleString()}đ</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px', color: '#39FF14' }}>
+              <span>Chiết khấu sỉ (-{discountRate * 100}%):</span>
+              <span style={{ fontFamily: 'var(--mono)' }}>-{discountAmount.toLocaleString()}đ</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '8px', borderTop: '1px solid var(--border)', fontWeight: 'bold', fontSize: '15px' }}>
+              <span>Thành tiền sau chiết khấu:</span>
+              <span style={{ color: 'var(--primary)', fontFamily: 'var(--mono)' }}>{finalTotal.toLocaleString()}đ</span>
+            </div>
+          </div>
+
+          {/* Note textarea */}
+          <div style={{ marginBottom: '16px' }}>
+            <label style={{ fontSize: '12px', fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>Ghi chú yêu cầu thêm cho xưởng:</label>
             <textarea
-              className="form-control"
-              value={requirements}
-              onChange={(e) => setRequirements(e.target.value)}
-              placeholder="Nhập các lưu ý đặc biệt, mục đích sử dụng để Maker hỗ trợ tốt nhất..."
-              style={{ height: '80px', resize: 'none', padding: '8px' }}
-              required
+              className="input"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Nhập ghi chú giao hàng hoặc khắc logo..."
+              style={{ width: '100%', height: '60px' }}
             />
           </div>
 
-          <button type="submit" className="btn btn-primary" style={{ width: '100%', gap: '8px', padding: '10px' }}>
-            <Send size={16} />
-            Đăng yêu cầu in lên Bảng tin
+          <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '12px', fontWeight: 'bold' }}>
+            Gửi Đơn Sỉ & Nhận Báo Giá Ưu Đãi
           </button>
         </form>
       </div>

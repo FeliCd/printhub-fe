@@ -1,11 +1,11 @@
-import { Gift, AlertOctagon, BarChart3 } from 'lucide-react';
+import { Gift, ShieldCheck, Printer } from 'lucide-react';
 import type { RouteConfig } from './routes';
 
 export const adminMenuRoutes: RouteConfig[] = [
   {
     path: '/admin/dashboard',
-    label: 'Báo cáo doanh thu',
-    icon: <BarChart3 size={18} />,
+    label: 'Quản lý Xưởng & Tiến độ In',
+    icon: <Printer size={18} />,
     allowedRoles: ['ADMIN']
   },
   {
@@ -16,8 +16,8 @@ export const adminMenuRoutes: RouteConfig[] = [
   },
   {
     path: '/admin/disputes',
-    label: 'Quản lý tranh chấp',
-    icon: <AlertOctagon size={18} />,
+    label: 'Bảo hành & Đổi trả CSKH',
+    icon: <ShieldCheck size={18} />,
     allowedRoles: ['ADMIN']
   }
 ];

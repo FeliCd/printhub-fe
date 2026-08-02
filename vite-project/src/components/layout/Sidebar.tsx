@@ -1,11 +1,11 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Layers, LogOut } from 'lucide-react';
+import { Ruler, LogOut } from 'lucide-react';
 import { route } from '@/constants/routes';
 
 interface SidebarProps {
   userName: string;
-  userRole: 'BUYER' | 'MAKER' | 'ADMIN';
+  userRole: 'BUYER' | 'ADMIN';
   onLogout: () => void;
 }
 
@@ -14,24 +14,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
   userRole,
   onLogout,
 }) => {
-  // Select the appropriate route array based on the role
-  const menuList = 
-    userRole === 'ADMIN' 
-      ? route.menu.admin 
-      : userRole === 'MAKER' 
-        ? route.menu.maker 
-        : route.menu.buyer;
+  const menuList = userRole === 'ADMIN' ? route.menu.admin : route.menu.buyer;
 
   return (
     <aside className="sidebar">
       <div className="logo-container">
-        <Layers className="logo-accent" size={28} />
+        <Ruler className="logo-accent" size={28} />
         <span className="logo-text">
           Print<span className="logo-accent">Hub 3D</span>
         </span>
       </div>
 
-      {/* User info snippet */}
       <div style={{
         padding: '12px',
         backgroundColor: 'var(--bg-primary)',
@@ -40,7 +33,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         marginTop: '12px'
       }}>
         <div style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '4px' }}>
-          Đang đăng nhập:
+          Tài khoản:
         </div>
         <div style={{ fontSize: '14px', fontWeight: 'bold', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
           {userName}
@@ -55,21 +48,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
           padding: '2px 6px',
           borderRadius: '4px'
         }}>
-          {userRole}
+          {userRole === 'ADMIN' ? 'QUẢN TRỊ XƯỞNG' : 'KHÁCH HÀNG B2C'}
         </div>
       </div>
 
       <nav className="nav-links" style={{ marginTop: '24px' }}>
         {menuList
-          .filter((route) => route.allowedRoles.includes(userRole))
-          .map((route) => (
+          .filter((item) => (item.allowedRoles as string[]).includes(userRole))
+          .map((item) => (
           <NavLink
-            key={route.path}
-            to={route.path}
+            key={item.path}
+            to={item.path}
             className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
           >
-            {route.icon}
-            <span>{route.label}</span>
+            {item.icon}
+            <span>{item.label}</span>
           </NavLink>
         ))}
       </nav>

@@ -42,7 +42,7 @@ export const CatalogPreviewPage: React.FC = () => {
     return (
       p.name.toLowerCase().includes(query) ||
       p.category.toLowerCase().includes(query) ||
-      p.makerName.toLowerCase().includes(query) ||
+      (p.makerName && p.makerName.toLowerCase().includes(query)) ||
       (p.description && p.description.toLowerCase().includes(query))
     );
   });

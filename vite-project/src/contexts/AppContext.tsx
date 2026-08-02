@@ -89,81 +89,13 @@ const INITIAL_SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     updatedAt: new Date().toISOString()
   },
 
-  // MAKER PLANS (Loyalty Points / Cash VIP)
-  {
-    id: 'plan-maker-silver-points',
-    type: 'MAKER',
-    name: 'Gói Bạc Maker - Nâng Hạng Điểm',
-    price: 0,
-    benefits: 'Hỗ trợ đẩy 5 tin quảng cáo cơ bản hiển thị trên trang chủ',
-    requiredPoints: 1000,
-    isActive: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  },
-  {
-    id: 'plan-maker-silver-cash',
-    type: 'MAKER',
-    name: 'Gói Bạc Maker - VIP Tiền Mặt',
-    price: 150000,
-    benefits: '[Mã giảm giá X2] Đẩy 10 tin nổi bật X2 hiển thị + Giảm phí hoa hồng sàn còn 4%',
-    requiredPoints: 0,
-    isActive: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  },
-  {
-    id: 'plan-maker-gold-points',
-    type: 'MAKER',
-    name: 'Gói Vàng Maker - Nâng Hạng Điểm',
-    price: 0,
-    benefits: 'Hỗ trợ đẩy 15 tin quảng cáo cơ bản hiển thị trên trang chủ',
-    requiredPoints: 2200,
-    isActive: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  },
-  {
-    id: 'plan-maker-gold-cash',
-    type: 'MAKER',
-    name: 'Gói Vàng Maker - VIP Tiền Mặt',
-    price: 350000,
-    benefits: '[Mã giảm giá X2] Đẩy 30 tin nổi bật X2 hiển thị + Giảm phí hoa hồng sàn còn 3%',
-    requiredPoints: 0,
-    isActive: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  },
-  {
-    id: 'plan-maker-premium-points',
-    type: 'MAKER',
-    name: 'Gói Bạch Kim Maker - Nâng Hạng Điểm',
-    price: 0,
-    benefits: 'Hỗ trợ đẩy 50 tin quảng cáo cơ bản hiển thị trên trang chủ',
-    requiredPoints: 4000,
-    isActive: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  },
-  {
-    id: 'plan-maker-premium-cash',
-    type: 'MAKER',
-    name: 'Gói Bạch Kim Maker - VIP Tiền Mặt',
-    price: 700000,
-    benefits: '[Mã giảm giá X2] Đẩy tin nổi bật KHÔNG GIỚI HẠN X2 hiển thị + Giảm phí hoa hồng sàn còn 2%',
-    requiredPoints: 0,
-    isActive: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  }
 ];
 
 const MOCK_USERS: MockUser[] = [
   { id: 'user-buyer-1', name: 'Nguyễn Văn Anh', role: 'BUYER' },
   { id: 'user-buyer-2', name: 'Trần Minh Tuấn', role: 'BUYER' },
   { id: 'user-buyer-3', name: 'Lê Thị Hương', role: 'BUYER' },
-  { id: 'user-maker-1', name: 'DragonCreator3D', role: 'MAKER' },
-  { id: 'user-maker-2', name: 'MakerLabb', role: 'MAKER' }
+  { id: 'user-admin-1', name: 'Quản trị xưởng', role: 'ADMIN' }
 ];
 
 const INITIAL_USER_SUBSCRIPTIONS: UserSubscription[] = [
@@ -1735,14 +1667,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const isAllowed = (path: string) => {
     if (!currentUser) return false;
-    const activeRoutes = 
-      currentUser.role === 'ADMIN' 
-        ? route.menu.admin 
-        : currentUser.role === 'MAKER' 
-          ? route.menu.maker 
-          : route.menu.buyer;
-    const matchedRoute = activeRoutes.find(r => r.path === path);
-    return matchedRoute ? matchedRoute.allowedRoles.includes(currentUser.role) : false;
+    const activeRoutes = currentUser.role === 'ADMIN' ? route.menu.admin : route.menu.buyer;
+    const matchedRoute = activeRoutes.find((r: any) => r.path === path);
+    return matchedRoute ? (matchedRoute.allowedRoles as string[]).includes(currentUser.role) : false;
   };
 
   return (

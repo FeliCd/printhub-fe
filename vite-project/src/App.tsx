@@ -11,7 +11,6 @@ import { LoginPage } from '@/pages/LoginPage';
 import { SignUpPage } from '@/pages/SignUpPage';
 import { CatalogPage } from '@/pages/CatalogPage';
 import { CustomOrdersPage } from '@/pages/CustomOrdersPage';
-import { PrintRequestsPage } from '@/pages/PrintRequestsPage';
 import { WalletPage } from '@/pages/WalletPage';
 import { DisputesPage } from '@/pages/DisputesPage';
 import { ProfilePage } from '@/pages/ProfilePage';
@@ -22,7 +21,6 @@ import { SubscriptionsPage } from '@/pages/SubscriptionsPage';
 import { AdminSubscriptionsPage } from '@/pages/AdminSubscriptionsPage';
 import { CartPage } from '@/pages/CartPage';
 import { OrdersPage } from '@/pages/OrdersPage';
-import { MakerOrdersStatusPage } from '@/pages/MakerOrdersStatusPage';
 
 // Modals & Drawers
 import { ProductDetailModal } from '@/components/shared/ProductDetailModal';
@@ -139,15 +137,10 @@ export default function App() {
     handleSetDefaultAddress,
     handleTopup,
     handleOpenDispute,
-    handleMakerPickRequest,
-    handleMakerQuote,
-    handleMakerSendMessage,
     handleBuyerSendMessage,
     handleBuyerAcceptQuote,
-    handleMakerUploadProof,
     handleBuyerCompleteCustom,
     handleResolveDispute,
-    handleUpdateOrderStatus,
     handleDeleteProduct,
     handleLogin,
     handleLogout,
@@ -209,157 +202,125 @@ export default function App() {
                 setIsCartOpen={setIsCartOpen}
                 cart={cart}
               >
-                    <Routes>
-                      <Route
-                        path="/catalog"
-                        element={
-                    currentUser?.role === 'ADMIN' ? (
-                      <Navigate to="/admin/dashboard" replace />
-                    ) : (
-                      <CatalogPage
-                        products={products}
-                        userRole={currentUser?.role || 'BUYER'}
-                        onAddProductClick={() => setIsNewProductModalOpen(true)}
-                        onProductClick={(p) => setSelectedProduct(p)}
-                      />
-                    )
-                  }
-                />
-                {isAllowed('/custom') && (
+                <Routes>
                   <Route
-                    path="/custom"
+                    path="/catalog"
                     element={
-                      <CustomOrdersPage
-                        customOrders={customOrders}
-                        onAddRequestClick={() => setIsCustomOrderModalOpen(true)}
-                        onBuyerAcceptQuote={handleBuyerAcceptQuote}
-                        onBuyerCompleteCustom={handleBuyerCompleteCustom}
-                        onBuyerSendMessage={handleBuyerSendMessage}
-                      />
+                      currentUser?.role === 'ADMIN' ? (
+                        <Navigate to="/admin/dashboard" replace />
+                      ) : (
+                        <CatalogPage
+                          products={products}
+                          userRole={(currentUser?.role as any) === 'ADMIN' ? 'ADMIN' : 'BUYER'}
+                          onAddProductClick={() => setIsNewProductModalOpen(true)}
+                          onProductClick={(p) => setSelectedProduct(p)}
+                        />
+                      )
                     }
                   />
-                )}
-                {isAllowed('/subscriptions') && (
-                  <Route
-                    path="/subscriptions"
-                    element={
-                      <SubscriptionsPage />
-                    }
-                  />
-                )}
-                {isAllowed('/print-requests') && (
-                  <Route
-                    path="/print-requests"
-                    element={
-                      <PrintRequestsPage
-                        customOrders={customOrders}
-                        orders={orders}
-                        onMakerPickRequest={handleMakerPickRequest}
-                        onMakerQuote={handleMakerQuote}
-                        onMakerSendMessage={handleMakerSendMessage}
-                        onMakerUploadProof={handleMakerUploadProof}
-                      />
-                    }
-                  />
-                )}
-                {isAllowed('/wallet') && (
-                  <Route
-                    path="/wallet"
-                    element={
-                      <WalletPage
-                        walletTransactions={walletTransactions}
-                        topupAmount={topupAmount}
-                        setTopupAmount={setTopupAmount}
-                        onTopup={handleTopup}
-                      />
-                    }
-                  />
-                )}
-                {isAllowed('/disputes') && (
-                  <Route
-                    path="/disputes"
-                    element={
-                      <DisputesPage
-                        disputes={disputes}
-                        userRole={currentUser?.role || 'BUYER'}
-                        onAddDisputeClick={() => setIsDisputeModalOpen(true)}
-                        onResolveDispute={handleResolveDispute}
-                      />
-                    }
-                  />
-                )}
-                {isAllowed('/admin/dashboard') && (
-                  <Route
-                    path="/admin/dashboard"
-                    element={<AdminDashboardPage />}
-                  />
-                )}
-                {isAllowed('/admin/subscriptions') && (
-                  <Route
-                    path="/admin/subscriptions"
-                    element={<AdminSubscriptionsPage />}
-                  />
-                )}
-                {isAllowed('/admin/disputes') && (
-                  <Route
-                    path="/admin/disputes"
-                    element={
-                      <DisputesPage
-                        disputes={disputes}
-                        userRole="ADMIN"
-                        onAddDisputeClick={() => setIsDisputeModalOpen(true)}
-                        onResolveDispute={handleResolveDispute}
-                      />
-                    }
-                  />
-                )}
-                {isAllowed('/profile') && (
-                  <Route
-                    path="/profile"
-                    element={
-                      <ProfilePage
-                        makerProfile={makerProfile}
-                        addresses={addresses}
-                        onAddAddress={handleAddAddress}
-                        onSetDefaultAddress={handleSetDefaultAddress}
-                      />
-                    }
-                  />
-                )}
-                {isAllowed('/cart') || true ? (
+                  {isAllowed('/custom') && (
+                    <Route
+                      path="/custom"
+                      element={
+                        <CustomOrdersPage
+                          customOrders={customOrders}
+                          onAddRequestClick={() => setIsCustomOrderModalOpen(true)}
+                          onBuyerAcceptQuote={handleBuyerAcceptQuote}
+                          onBuyerCompleteCustom={handleBuyerCompleteCustom}
+                          onBuyerSendMessage={handleBuyerSendMessage}
+                        />
+                      }
+                    />
+                  )}
+                  {isAllowed('/subscriptions') && (
+                    <Route
+                      path="/subscriptions"
+                      element={
+                        <SubscriptionsPage />
+                      }
+                    />
+                  )}
+                  {isAllowed('/wallet') && (
+                    <Route
+                      path="/wallet"
+                      element={
+                        <WalletPage
+                          walletTransactions={walletTransactions}
+                          topupAmount={topupAmount}
+                          setTopupAmount={setTopupAmount}
+                          onTopup={handleTopup}
+                        />
+                      }
+                    />
+                  )}
+                  {isAllowed('/disputes') && (
+                    <Route
+                      path="/disputes"
+                      element={
+                        <DisputesPage
+                          disputes={disputes}
+                          userRole={currentUser?.role === 'ADMIN' ? 'ADMIN' : 'BUYER'}
+                          onAddDisputeClick={() => setIsDisputeModalOpen(true)}
+                          onResolveDispute={handleResolveDispute}
+                        />
+                      }
+                    />
+                  )}
+                  {isAllowed('/admin/dashboard') && (
+                    <Route
+                      path="/admin/dashboard"
+                      element={<AdminDashboardPage />}
+                    />
+                  )}
+                  {isAllowed('/admin/subscriptions') && (
+                    <Route
+                      path="/admin/subscriptions"
+                      element={<AdminSubscriptionsPage />}
+                    />
+                  )}
+                  {isAllowed('/admin/disputes') && (
+                    <Route
+                      path="/admin/disputes"
+                      element={
+                        <DisputesPage
+                          disputes={disputes}
+                          userRole="ADMIN"
+                          onAddDisputeClick={() => setIsDisputeModalOpen(true)}
+                          onResolveDispute={handleResolveDispute}
+                        />
+                      }
+                    />
+                  )}
+                  {isAllowed('/profile') && (
+                    <Route
+                      path="/profile"
+                      element={
+                        <ProfilePage
+                          makerProfile={makerProfile}
+                          addresses={addresses}
+                          onAddAddress={handleAddAddress}
+                          onSetDefaultAddress={handleSetDefaultAddress}
+                        />
+                      }
+                    />
+                  )}
                   <Route path="/cart" element={<CartPage />} />
-                ) : null}
-                {isAllowed('/orders') && (
-                  <Route
-                    path="/orders"
-                    element={
-                      <OrdersPage
-                        orders={orders}
-                        customOrders={customOrders}
-                        onBuyerAcceptQuote={handleBuyerAcceptQuote}
-                        onBuyerCompleteCustom={handleBuyerCompleteCustom}
-                        onBuyerSendMessage={handleBuyerSendMessage}
-                      />
-                    }
-                  />
-                )}
-                {isAllowed('/maker/orders-status') && (
-                  <Route
-                    path="/maker/orders-status"
-                    element={
-                      <MakerOrdersStatusPage
-                        customOrders={customOrders}
-                        orders={orders}
-                        onMakerQuote={handleMakerQuote}
-                        onMakerSendMessage={handleMakerSendMessage}
-                        onMakerUploadProof={handleMakerUploadProof}
-                        onUpdateOrderStatus={handleUpdateOrderStatus}
-                      />
-                    }
-                  />
-                )}
-                      <Route path="*" element={<Navigate to="/catalog" replace />} />
-                    </Routes>
+                  {isAllowed('/orders') && (
+                    <Route
+                      path="/orders"
+                      element={
+                        <OrdersPage
+                          orders={orders}
+                          customOrders={customOrders}
+                          onBuyerAcceptQuote={handleBuyerAcceptQuote}
+                          onBuyerCompleteCustom={handleBuyerCompleteCustom}
+                          onBuyerSendMessage={handleBuyerSendMessage}
+                        />
+                      }
+                    />
+                  )}
+                  <Route path="*" element={<Navigate to="/catalog" replace />} />
+                </Routes>
               </DashboardContainer>
             )
           }
