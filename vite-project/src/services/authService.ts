@@ -7,8 +7,10 @@ export const authService = {
       password: credentials.password,
     };
     const response = await post('/auth/login', payload);
-    if (response.data?.result?.token) {
-      localStorage.setItem('token', response.data.result.token);
+    const result = response.data?.result || response.data;
+    const token = result?.accessToken || result?.token;
+    if (token) {
+      localStorage.setItem('token', token);
     }
     return response.data;
   },

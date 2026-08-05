@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from 'react';
-import { Trash2, ShieldAlert, ShoppingBag, Lock } from 'lucide-react';
+import { Trash2, ShieldAlert, ShoppingBag, Lock, Loader2 } from 'lucide-react';
 import { useApp } from '../contexts/AppContext';
 import { PayOSMockModal } from '../components/shared/PayOSMockModal';
+import { paymentService, orderService } from '../services';
 
 export const CartPage: React.FC = () => {
   const {
@@ -17,6 +18,7 @@ export const CartPage: React.FC = () => {
   const [showPayOS, setShowPayOS] = useState(false);
   const [showDepositFrictionPopup, setShowDepositFrictionPopup] = useState(false);
   const [isDepositAgreed, setIsDepositAgreed] = useState(false);
+  const [loadingPayOS, setLoadingPayOS] = useState(false);
 
   const subtotal = useMemo(() => cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0), [cart]);
   const hasCustomEngravedRuler = useMemo(() => cart.some((item) => item.engravingText || item.product.isCustomizable), [cart]);
@@ -38,12 +40,66 @@ export const CartPage: React.FC = () => {
   const finalTotal = Math.max(0, totalAfterSub + shippingFee);
   const requiredDeposit = hasCustomEngravedRuler ? Math.round(finalTotal * 0.5) : 0;
 
-  const handleTriggerCheckoutPayOS = () => {
+  const handleTriggerCheckoutPayOS = async () => {
     if (hasCustomEngravedRuler && !isDepositAgreed) {
       setShowDepositFrictionPopup(true);
       return;
     }
-    setShowPayOS(true);
+
+    setLoadingPayOS(true);
+
+    try {
+      // 1. Khởi tạo đơn hàng trên Backend để lấy Order ID
+      const defaultAddr = addresses.find(a => a.isDefault) || addresses[0] || { name: 'Khách hàng', phone: '0987654321', addressLine: '123 Nguyễn Trãi', province: 'TP.HCM' };
+      const orderPayload = {
+        recipientName: defaultAddr.name,
+        phone: defaultAddr.phone,
+        address: defaultAddr.addressLine || '123 Nguyễn Trãi',
+        province: defaultAddr.province || 'TP.HCM',
+        items: cart.map(c => ({
+          productId: c.product.id,
+          quantity: c.quantity,
+        }))
+      };
+
+      let orderId = '';
+      try {
+        const orderRes = await orderService.createOrder(orderPayload);
+        const orderList = Array.isArray(orderRes?.result) ? orderRes.result : (Array.isArray(orderRes) ? orderRes : [orderRes?.result || orderRes]);
+        orderId = orderList[0]?.id || orderList[0]?.orderId || orderRes?.result?.id || orderRes?.id;
+        console.log('Order created successfully with ID:', orderId);
+      } catch (e) {
+        console.warn('Backend order creation offline/failed, trying fallback order ID:', e);
+      }
+
+      if (!orderId) {
+        // Fallback random UUID if backend order creation was offline
+        orderId = '550e8400-e29b-41d4-a716-446655440000';
+      }
+
+      // 2. Gọi API Backend sinh Link PayOS
+      const payosRes = await paymentService.createPayOSPaymentUrl({
+        orderId,
+        orderType: 'ORDER',
+        description: `Thanh toan don hang ${orderId.substring(0, 8)}`
+      });
+
+      const checkoutUrl = payosRes?.result?.checkoutUrl || payosRes?.checkoutUrl || payosRes?.data?.checkoutUrl;
+
+      if (checkoutUrl) {
+        // Chuyển hướng sang Cổng Thanh Toán PayOS chính thức
+        window.location.href = checkoutUrl;
+        return;
+      }
+
+      // Nếu không có checkoutUrl trả về, mở Mock Modal dự phòng
+      setShowPayOS(true);
+    } catch (err: any) {
+      console.warn('Backend PayOS link creation failed, fallback to PayOS Mock Modal:', err);
+      setShowPayOS(true);
+    } finally {
+      setLoadingPayOS(false);
+    }
   };
 
   const handleConfirmPayOSPayment = () => {
@@ -261,10 +317,19 @@ export const CartPage: React.FC = () => {
             <div style={{ marginTop: '24px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <button
                 className="btn btn-primary"
+                disabled={loadingPayOS}
                 style={{ width: '100%', padding: '14px', fontSize: '15px', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}
                 onClick={handleTriggerCheckoutPayOS}
               >
-                <Lock size={18} /> {hasCustomEngravedRuler ? `Thanh Toán Cọc qua PayOS (${requiredDeposit.toLocaleString()}đ)` : 'Thanh Toán qua PayOS'}
+                {loadingPayOS ? (
+                  <>
+                    <Loader2 size={18} className="animate-spin" /> Đang khởi tạo link PayOS...
+                  </>
+                ) : (
+                  <>
+                    <Lock size={18} /> {hasCustomEngravedRuler ? `Thanh Toán Cọc qua PayOS (${requiredDeposit.toLocaleString()}đ)` : 'Thanh Toán qua PayOS'}
+                  </>
+                )}
               </button>
 
               {!hasCustomEngravedRuler && (

@@ -18,7 +18,7 @@ import type {
   SubscriptionType
 } from '@/types';
 import { route } from '@/constants/routes';
-import { productService, orderService, addressService } from '@/services';
+import { productService, addressService } from '@/services';
 
 // Initial Mock Data
 const INITIAL_SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
@@ -941,24 +941,32 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     productService
       .getProducts()
       .then((res: any) => {
-        if (res?.result && Array.isArray(res.result)) {
-          setProducts(res.result);
+        const items = Array.isArray(res?.result)
+          ? res.result
+          : Array.isArray(res?.result?.content)
+            ? res.result.content
+            : Array.isArray(res?.content)
+              ? res.content
+              : null;
+        if (items && items.length > 0) {
+          // Map backend ProductResponseDTO into frontend Product interface
+          const mappedProducts = items.map((p: any) => ({
+            id: p.id || p.productId,
+            name: p.title || p.name || 'Sản phẩm in 3D',
+            description: p.description || '',
+            price: p.price || 0,
+            category: p.categoryName || p.category?.categoryName || 'Thước kẻ & Dụng cụ học tập 3D',
+            imageUrl: p.primaryImageUrl || p.imageUrl || p.images?.[0]?.imageUrl || 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80',
+            stock: p.stock || 50,
+            isCustomizable: true,
+          }));
+          setProducts(mappedProducts);
         }
       })
       .catch((err) => {
         console.log('Using local products fallback:', err?.message);
       });
 
-    orderService
-      .getOrders()
-      .then((res: any) => {
-        if (res?.result && Array.isArray(res.result)) {
-          setOrders(res.result);
-        }
-      })
-      .catch((err) => {
-        console.log('Using local orders fallback:', err?.message);
-      });
   }, []);
 
   // Maker profile registration state
@@ -1020,22 +1028,22 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   const handleAddToCart = (product: Product, options?: { color?: string; material?: string }) => {
-    const existing = cart.find(item => 
-      item.product.id === product.id && 
+    const existing = cart.find(item =>
+      item.product.id === product.id &&
       (!options || (item.selectedColor === options.color && item.selectedMaterial === options.material))
     );
     if (existing) {
-      setCart(cart.map(item => 
-        (item.product.id === product.id && (!options || (item.selectedColor === options.color && item.selectedMaterial === options.material))) 
-          ? { ...item, quantity: item.quantity + 1 } 
+      setCart(cart.map(item =>
+        (item.product.id === product.id && (!options || (item.selectedColor === options.color && item.selectedMaterial === options.material)))
+          ? { ...item, quantity: item.quantity + 1 }
           : item
       ));
     } else {
-      setCart([...cart, { 
-        product, 
-        quantity: 1, 
-        selectedColor: options?.color, 
-        selectedMaterial: options?.material 
+      setCart([...cart, {
+        product,
+        quantity: 1,
+        selectedColor: options?.color,
+        selectedMaterial: options?.material
       }]);
     }
     addNotification('ORDER', 'Giỏ hàng đã cập nhật', `Đã thêm sản phẩm "${product.name}" vào giỏ hàng.`);
@@ -1101,7 +1109,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         newOrder.items.forEach(item => {
           const makerGross = item.product.price * item.quantity;
           const makerNet = Math.round(makerGross * 0.95);
-          
+
           setWalletTransactions(prevTx => [
             {
               id: `TX-PAYOUT-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
@@ -1357,13 +1365,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       return;
     }
 
-    setCustomOrders(prev => prev.map(o => 
-      o.id === orderId 
-        ? { 
-            ...o, 
-            status: 'ACCEPTED' as const, 
-            paymentType 
-          } 
+    setCustomOrders(prev => prev.map(o =>
+      o.id === orderId
+        ? {
+          ...o,
+          status: 'ACCEPTED' as const,
+          paymentType
+        }
         : o
     ));
 
@@ -1440,23 +1448,23 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   const handleResolveDispute = (id: string, refundAmount: number, refundType: 'FULL' | 'PARTIAL' | 'NONE') => {
-    setDisputes(prevDisputes => prevDisputes.map(d => d.id === id ? { 
-      ...d, 
-      status: 'RESOLVED', 
-      refundAmount, 
+    setDisputes(prevDisputes => prevDisputes.map(d => d.id === id ? {
+      ...d,
+      status: 'RESOLVED',
+      refundAmount,
       refundType,
       messages: [
         ...d.messages,
-        { 
-          sender: 'ADMIN', 
-          text: refundType === 'NONE' 
+        {
+          sender: 'ADMIN',
+          text: refundType === 'NONE'
             ? `Admin đã phê duyệt phán quyết xử lý tranh chấp: Từ chối khiếu nại (Không hoàn tiền cho Người mua vì Maker làm đúng).`
-            : `Admin đã phê duyệt phán quyết xử lý tranh chấp: Hoàn trả ${refundType === 'FULL' ? '100%' : '50%'} số tiền (${refundAmount.toLocaleString()}đ) cho Người mua.`, 
-          date: new Date().toISOString().split('T')[0] 
+            : `Admin đã phê duyệt phán quyết xử lý tranh chấp: Hoàn trả ${refundType === 'FULL' ? '100%' : '50%'} số tiền (${refundAmount.toLocaleString()}đ) cho Người mua.`,
+          date: new Date().toISOString().split('T')[0]
         }
       ]
     } : d));
-    
+
     if (refundAmount > 0) {
       setWalletBalance(prev => prev + refundAmount);
       setWalletTransactions(prevTx => [
@@ -1496,7 +1504,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           order.items.forEach(item => {
             const makerGross = item.product.price * item.quantity;
             const makerNet = Math.round(makerGross * 0.95);
-            
+
             setWalletTransactions(prevTx => [
               {
                 id: `TX-PAYOUT-${Date.now()}-${Math.floor(Math.random() * 1000)}`,

@@ -2,8 +2,13 @@ import { get, post, remove } from './api';
 
 export const productService = {
   getProducts: async (params?: any) => {
-    const response = await get('/products', params);
-    return response.data;
+    try {
+      const response = await get('/marketplace/product', params);
+      return response.data;
+    } catch (e) {
+      const response = await get('/products', params);
+      return response.data;
+    }
   },
 
   getProductById: async (id: string | number) => {

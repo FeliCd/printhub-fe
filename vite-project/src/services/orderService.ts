@@ -1,10 +1,6 @@
 import { get, post, put } from './api';
 
 export const orderService = {
-  getOrders: async () => {
-    const response = await get('/orders');
-    return response.data;
-  },
 
   createOrder: async (orderData: any) => {
     const response = await post('/orders', orderData);

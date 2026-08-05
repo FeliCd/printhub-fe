@@ -101,8 +101,9 @@ const Page: React.FC<LoginCardProps> = ({ onLogin = () => { } }) => {
 
     try {
       const res = await authService.login({ username: username.trim(), password });
-      const userRole: 'BUYER' | 'ADMIN' = res?.result?.role || (username.toLowerCase().includes('admin') ? 'ADMIN' : 'BUYER');
-      const userName = res?.result?.name || username;
+      const result = res?.result || res;
+      const userRole: 'BUYER' | 'ADMIN' = result?.role === 'ADMIN' ? 'ADMIN' : 'BUYER';
+      const userName = result?.fullName || result?.username || username;
       onLogin(userName, userRole);
     } catch (err: any) {
       console.warn('Backend login failed, fallback to local login:', err);
