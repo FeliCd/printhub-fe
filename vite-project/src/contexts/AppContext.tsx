@@ -18,6 +18,7 @@ import type {
   SubscriptionType
 } from '@/types';
 import { route } from '@/constants/routes';
+import { productService, orderService, addressService } from '@/services';
 
 // Initial Mock Data
 const INITIAL_SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
@@ -554,7 +555,7 @@ interface AppContextType {
     description: string;
     licenseType?: 'PERSONAL' | 'COMMERCIAL';
   }) => void;
-  handleAddAddress: (addressData: { name: string; phone: string; addressLine: string; province: string }) => void;
+  handleAddAddress: (addressData: { name: string; phone: string; addressLine: string; province: string; isDefault?: boolean }) => void;
   handleSetDefaultAddress: (id: number) => void;
   handleTopup: () => void;
   handleOpenDispute: (data: { orderId: string; reason: string; evidenceUrl: string }) => void;
@@ -935,6 +936,31 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     };
   }, []);
 
+  // Synchronize initial data from Backend API Services
+  React.useEffect(() => {
+    productService
+      .getProducts()
+      .then((res: any) => {
+        if (res?.result && Array.isArray(res.result)) {
+          setProducts(res.result);
+        }
+      })
+      .catch((err) => {
+        console.log('Using local products fallback:', err?.message);
+      });
+
+    orderService
+      .getOrders()
+      .then((res: any) => {
+        if (res?.result && Array.isArray(res.result)) {
+          setOrders(res.result);
+        }
+      })
+      .catch((err) => {
+        console.log('Using local orders fallback:', err?.message);
+      });
+  }, []);
+
   // Maker profile registration state
   const [makerProfile] = useState<MakerProfile>({
     status: 'APPROVED', // Pre-approved for maker demo mode
@@ -1194,7 +1220,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     ));
   };
 
-  const handleAddProduct = (productData: {
+  const handleAddProduct = async (productData: {
     name: string;
     type: 'PHYSICAL' | 'DIGITAL';
     price: number;
@@ -1220,25 +1246,48 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       watermarkedUrl: productData.type === 'DIGITAL' ? 'model_design_watermarked.stl' : undefined
     };
 
-    setProducts([...products, newProd]);
+    try {
+      const res = await productService.createProduct(productData);
+      if (res?.result) {
+        setProducts(prev => [...prev, res.result]);
+      } else {
+        setProducts(prev => [...prev, newProd]);
+      }
+    } catch (err) {
+      console.warn('Backend createProduct offline -> Fallback local:', err);
+      setProducts(prev => [...prev, newProd]);
+    }
     setIsNewProductModalOpen(false);
     addNotification('SYSTEM', 'Sản phẩm mới đã đăng', `Mẫu sản phẩm "${newProd.name}" đã được hiển thị trên catalog.`);
   };
 
-  const handleAddAddress = (addressData: { name: string; phone: string; addressLine: string; province: string }) => {
+  const handleAddAddress = async (addressData: { name: string; phone: string; addressLine: string; province: string; isDefault?: boolean }) => {
+    try {
+      const res = await addressService.createAddress(addressData);
+      if (res?.result) {
+        setAddresses((prev) => [...prev, res.result]);
+        return;
+      }
+    } catch (err) {
+      console.log('BE address service offline -> Fallback to local state:', err);
+    }
     const newAddress: Address = {
       id: addresses.length + 1,
       name: addressData.name,
       phone: addressData.phone,
       addressLine: addressData.addressLine,
       province: addressData.province,
-      isDefault: addresses.length === 0
+      isDefault: addressData.isDefault || addresses.length === 0
     };
-
-    setAddresses([...addresses, newAddress]);
+    setAddresses((prev) => [...prev, newAddress]);
   };
 
-  const handleSetDefaultAddress = (id: number) => {
+  const handleSetDefaultAddress = async (id: number) => {
+    try {
+      await addressService.setDefaultAddress(id);
+    } catch (err) {
+      console.log('BE address service offline -> Fallback local default:', err);
+    }
     setAddresses(addresses.map(a => ({ ...a, isDefault: a.id === id })));
   };
 

@@ -21,6 +21,10 @@ import { SubscriptionsPage } from '@/pages/SubscriptionsPage';
 import { AdminSubscriptionsPage } from '@/pages/AdminSubscriptionsPage';
 import { CartPage } from '@/pages/CartPage';
 import { OrdersPage } from '@/pages/OrdersPage';
+import { BulkOrderPage } from '@/pages/BulkOrderPage';
+import { AdminProductionPage } from '@/pages/AdminProductionPage';
+import { WarrantyPage } from '@/pages/WarrantyPage';
+import { Ruler3DPage } from '@/pages/Ruler3DPage';
 
 // Modals & Drawers
 import { ProductDetailModal } from '@/components/shared/ProductDetailModal';
@@ -305,6 +309,10 @@ export default function App() {
                     />
                   )}
                   <Route path="/cart" element={<CartPage />} />
+                  <Route path="/ruler-3d" element={<Ruler3DPage />} />
+                  <Route path="/bulk-order" element={<BulkOrderPage />} />
+                  <Route path="/warranty" element={<WarrantyPage />} />
+                  <Route path="/admin/production" element={<AdminProductionPage />} />
                   {isAllowed('/orders') && (
                     <Route
                       path="/orders"

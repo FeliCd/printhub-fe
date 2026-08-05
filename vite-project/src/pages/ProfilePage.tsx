@@ -14,7 +14,7 @@ interface ProfilePageProps {
     trustScore: number;
   };
   addresses: Address[];
-  onAddAddress: (addressData: { name: string; phone: string; addressLine: string; province: string }) => void;
+  onAddAddress: (addressData: { name: string; phone: string; addressLine: string; province: string; isDefault?: boolean }) => void;
   onSetDefaultAddress: (id: number) => void;
 }
 

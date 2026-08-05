@@ -1,16 +1,22 @@
-import { ShoppingBag, Users, User, Gift, Wallet, ShieldCheck } from 'lucide-react';
+import { ShoppingBag, Users, User, Gift, Wallet, ShieldCheck, Sparkles } from 'lucide-react';
 import type { RouteConfig } from './routes';
 
 export const buyerMenuRoutes: RouteConfig[] = [
   {
     path: '/catalog',
-    label: 'Bộ Thước Kẻ In 3D',
+    label: 'Sản phẩm',
     icon: <ShoppingBag size={18} />,
     allowedRoles: ['BUYER']
   },
   {
-    path: '/custom',
-    label: 'Đặt Sỉ Cho Lớp / CLB',
+    path: '/ruler-3d',
+    label: 'Ruler 3D (Tùy chỉnh 3D)',
+    icon: <Sparkles size={18} />,
+    allowedRoles: ['BUYER']
+  },
+  {
+    path: '/bulk-order',
+    label: 'Đặt Sỉ Lớp (Excel Import)',
     icon: <Users size={18} />,
     allowedRoles: ['BUYER']
   },
@@ -21,21 +27,21 @@ export const buyerMenuRoutes: RouteConfig[] = [
     allowedRoles: ['BUYER']
   },
   {
+    path: '/warranty',
+    label: 'Bảo hành 1 đổi 1 trong 1 học kỳ',
+    icon: <ShieldCheck size={18} />,
+    allowedRoles: ['BUYER']
+  },
+  {
     path: '/wallet',
-    label: 'Ví điện tử',
+    label: 'Ví điện tử & Tích điểm',
     icon: <Wallet size={18} />,
     allowedRoles: ['BUYER']
   },
   {
     path: '/subscriptions',
-    label: 'Gói hội viên & Ưu đãi',
+    label: 'Gói Combo Học Kỳ & Ưu đãi',
     icon: <Gift size={18} />,
-    allowedRoles: ['BUYER']
-  },
-  {
-    path: '/disputes',
-    label: 'Đổi trả & Bảo hành số',
-    icon: <ShieldCheck size={18} />,
     allowedRoles: ['BUYER']
   },
   {

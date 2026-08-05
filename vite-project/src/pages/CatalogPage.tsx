@@ -51,21 +51,20 @@ export const CatalogPage: React.FC<CatalogPageProps> = ({
   });
 
   return (
-    <div>
+    <div className="space-y-8">
       {/* Header Banner */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
         <div>
           <h1 className="page-title" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <Ruler className="logo-accent" size={32} />
-            Bộ Thước Kẻ In 3D Khắc Tên Cá Nhân
+            Sản phẩm
           </h1>
-          <p className="page-subtitle">
-            Bộ 3 cây thước tiêu chuẩn (Thước thẳng, Thước tam giác vuông, Êke/Đo góc) in chìm công thức môn học và khắc tên riêng theo yêu cầu.
-          </p>
+          <p className="page-subtitle">Sản xuất trực tiếp, khắc tên/MSSV riêng, bảo hành 1 đổi 1 trong 1 học kỳ</p>
         </div>
         {userRole === 'ADMIN' && (
-          <button className="btn btn-primary" onClick={onAddProductClick}>
-            <Plus size={16} /> Thêm Mẫu Thước Mới
+          <button className="btn btn-primary" onClick={onAddProductClick} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Plus size={18} />
+            Thêm sản phẩm mới
           </button>
         )}
       </div>

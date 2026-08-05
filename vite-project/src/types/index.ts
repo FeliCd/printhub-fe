@@ -114,6 +114,16 @@ export interface Dispute {
   replacementOrderCreated?: boolean;
 }
 
+export interface WarrantyClaim {
+  id: string;
+  orderId: string;
+  userId: string;
+  imageProofUrl: string;
+  reason: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'REPLACED';
+  createdAt: string;
+}
+
 export interface AppNotification {
   id: string;
   type: 'ORDER' | 'DISPUTE' | 'PAYMENT' | 'SYSTEM';

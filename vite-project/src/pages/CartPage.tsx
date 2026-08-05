@@ -6,6 +6,8 @@ import { PayOSMockModal } from '../components/shared/PayOSMockModal';
 export const CartPage: React.FC = () => {
   const {
     cart,
+    addresses,
+    handleAddAddress,
     handleRemoveFromCart,
     handleUpdateCartQuantity,
     handleCheckout,
@@ -166,6 +168,57 @@ export const CartPage: React.FC = () => {
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', fontSize: '14px' }}>
               <span style={{ color: 'var(--text-secondary)' }}>Phí vận chuyển giao tận nơi:</span>
               <span style={{ fontFamily: 'var(--mono)' }}>{shippingFee === 0 ? 'Miễn phí' : `${shippingFee.toLocaleString()}đ`}</span>
+            </div>
+
+            {/* Shipping Address Selection Panel */}
+            <div style={{ background: 'var(--bg-secondary)', padding: '12px', borderRadius: '8px', border: '1px solid var(--border)', marginBottom: '16px' }}>
+              <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#FFF', marginBottom: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span>📍 Địa chỉ nhận hàng:</span>
+              </div>
+              {addresses && addresses.length > 0 ? (
+                <select
+                  className="input"
+                  style={{ width: '100%', fontSize: '12px', padding: '6px 10px', marginBottom: '8px' }}
+                  onChange={(e) => {
+                    const selected = addresses.find(a => a.id === Number(e.target.value));
+                    if (selected) {
+                      // Selected saved address
+                    }
+                  }}
+                >
+                  {addresses.map((addr) => (
+                    <option key={addr.id} value={addr.id}>
+                      {addr.name} ({addr.phone}) - {addr.addressLine}, {addr.province} {addr.isDefault ? '[Mặc định]' : ''}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '8px' }}>
+                  Chưa có địa chỉ lưu sẵn. Bạn có thể thêm địa chỉ mới bên dưới.
+                </div>
+              )}
+
+              {/* Add New Address Form Modal/Toggle */}
+              <button
+                type="button"
+                onClick={() => {
+                  const line = prompt('Nhập địa chỉ nhận hàng (Ví dụ: 123 Nguyễn Văn Cừ, Q.5, TP.HCM):');
+                  const phone = prompt('Nhập số điện thoại nhận hàng:');
+                  if (line && phone) {
+                    handleAddAddress({
+                      name: 'Địa chỉ giao hàng',
+                      phone: phone,
+                      addressLine: line,
+                      province: 'TP.HCM',
+                      isDefault: false
+                    });
+                    alert('Đã thêm địa chỉ giao hàng thành công!');
+                  }
+                }}
+                style={{ fontSize: '11px', color: '#39FF14', background: 'transparent', border: '1px border-dashed #39FF14', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', width: '100%', textAlign: 'center' }}
+              >
+                + Thêm địa chỉ nhận hàng mới
+              </button>
             </div>
 
             {/* Custom Engraving Deposit Alert */}
