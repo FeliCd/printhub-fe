@@ -1,6 +1,8 @@
 /* eslint-disable react-refresh/only-export-components */
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
+import { authService } from '@/services/authService';
+
 import type {
   Product,
   CartItem,
@@ -744,9 +746,54 @@ const INITIAL_WALLET_TRANSACTIONS: WalletTransaction[] = [
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  // Authentication States
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-  const [currentUser, setCurrentUser] = useState<{ name: string; role: 'BUYER' | 'MAKER' | 'ADMIN' } | null>(null);
+  // Authentication States rehydrated from localStorage
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
+    const savedUser = localStorage.getItem('printhub_user');
+    const token = localStorage.getItem('token');
+    return !!(token || savedUser);
+  });
+  const [currentUser, setCurrentUser] = useState<{ name: string; role: 'BUYER' | 'MAKER' | 'ADMIN' } | null>(() => {
+    const savedUser = localStorage.getItem('printhub_user');
+    if (savedUser) {
+      try {
+        return JSON.parse(savedUser);
+      } catch (e) {}
+    }
+    const token = localStorage.getItem('token');
+    if (token) {
+      return { name: 'Người dùng PrintHub', role: 'BUYER' };
+    }
+    return null;
+  });
+
+  // Rehydrate & verify auth session on mount
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      authService.getCurrentUser().then((res: any) => {
+        const user = res?.result || res;
+        if (user) {
+          const userObj = {
+            name: user.fullName || user.username || user.name || 'Người dùng PrintHub',
+            role: (user.role || (user.roles && user.roles[0]) || 'BUYER').toUpperCase()
+          };
+          setCurrentUser(userObj as any);
+          setIsAuthenticated(true);
+          localStorage.setItem('printhub_user', JSON.stringify(userObj));
+        }
+      }).catch((err: any) => {
+
+        console.warn('Session verification failed:', err);
+        if (err?.response?.status === 401) {
+          localStorage.removeItem('token');
+          localStorage.removeItem('printhub_user');
+          setIsAuthenticated(false);
+          setCurrentUser(null);
+        }
+      });
+    }
+  }, []);
+
 
   // Data States loaded from localStorage
   const [products, setProducts] = useState<Product[]>(() => {
@@ -1535,16 +1582,21 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   const handleLogin = (name: string, role: 'BUYER' | 'MAKER' | 'ADMIN') => {
-    setCurrentUser({ name, role });
+    const userObj = { name, role };
+    setCurrentUser(userObj);
     setIsAuthenticated(true);
+    localStorage.setItem('printhub_user', JSON.stringify(userObj));
     addNotification('SYSTEM', 'Đăng nhập thành công', `Chào mừng ${name} quay trở lại PrintHub.`);
   };
 
   const handleLogout = () => {
     setIsAuthenticated(false);
     setCurrentUser(null);
+    localStorage.removeItem('token');
+    localStorage.removeItem('printhub_user');
     setCart([]);
   };
+
 
   const triggerViolation = () => {
     setWalletBalance(-1500000);

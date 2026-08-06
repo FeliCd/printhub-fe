@@ -19,9 +19,20 @@ export const CartPage: React.FC = () => {
   const [showDepositFrictionPopup, setShowDepositFrictionPopup] = useState(false);
   const [isDepositAgreed, setIsDepositAgreed] = useState(false);
   const [loadingPayOS, setLoadingPayOS] = useState(false);
+  const [paymentMode, setPaymentMode] = useState<'DEPOSIT_50' | 'FULL_100' | 'COD'>('DEPOSIT_50');
 
   const subtotal = useMemo(() => cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0), [cart]);
   const hasCustomEngravedRuler = useMemo(() => cart.some((item) => item.engravingText || item.product.isCustomizable), [cart]);
+
+  // Sync default payment mode if cart changes
+  React.useEffect(() => {
+    if (hasCustomEngravedRuler) {
+      setPaymentMode('DEPOSIT_50');
+    } else {
+      setPaymentMode('FULL_100');
+    }
+  }, [hasCustomEngravedRuler]);
+
 
   // Check active subscription discount
   const activeSub = userSubscriptions.find(sub => sub.isActive && sub.planType === 'CUSTOMER');
@@ -56,7 +67,9 @@ export const CartPage: React.FC = () => {
         phone: defaultAddr.phone,
         address: defaultAddr.addressLine || '123 Nguyễn Trãi',
         province: defaultAddr.province || 'TP.HCM',
+        paymentMethod: 'PAYOS',
         items: cart.map(c => ({
+
           productId: c.product.id,
           quantity: c.quantity,
         }))
@@ -78,19 +91,32 @@ export const CartPage: React.FC = () => {
       }
 
       // 2. Gọi API Backend sinh Link PayOS
+      const isDeposit = paymentMode === 'DEPOSIT_50' && hasCustomEngravedRuler;
+      const targetAmount = isDeposit ? requiredDeposit : finalTotal;
+
       const payosRes = await paymentService.createPayOSPaymentUrl({
         orderId,
         orderType: 'ORDER',
-        description: `Thanh toan don hang ${orderId.substring(0, 8)}`
+        description: isDeposit ? `Dat coc don hang ${orderId.substring(0, 8)}` : `Thanh toan don hang ${orderId.substring(0, 8)}`,
+        customAmount: targetAmount,
+        paymentOption: isDeposit ? 'DEPOSIT' : 'FULL'
       });
 
-      const checkoutUrl = payosRes?.result?.checkoutUrl || payosRes?.checkoutUrl || payosRes?.data?.checkoutUrl;
+
+      const checkoutUrl = payosRes?.result?.paymentLinkUrl 
+        || payosRes?.result?.checkoutUrl 
+        || payosRes?.paymentLinkUrl 
+        || payosRes?.checkoutUrl 
+        || payosRes?.data?.paymentLinkUrl 
+        || payosRes?.data?.checkoutUrl;
 
       if (checkoutUrl) {
-        // Chuyển hướng sang Cổng Thanh Toán PayOS chính thức
+        // Chuyển hướng sang Cổng Thanh Toán PayOS chính thức ngay lập tức
+        console.log('Redirecting to PayOS checkout:', checkoutUrl);
         window.location.href = checkoutUrl;
         return;
       }
+
 
       // Nếu không có checkoutUrl trả về, mở Mock Modal dự phòng
       setShowPayOS(true);
@@ -296,9 +322,93 @@ export const CartPage: React.FC = () => {
               </span>
             </div>
 
+            {/* Payment Method Selector */}
+            <div style={{ marginTop: '20px' }}>
+              <div style={{ fontSize: '13px', fontWeight: 'bold', marginBottom: '10px', color: 'var(--text-primary)' }}>
+                Chọn Phương Thức Thanh Toán:
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {hasCustomEngravedRuler && (
+                  <label style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '10px 12px',
+                    borderRadius: '8px',
+                    border: paymentMode === 'DEPOSIT_50' ? '2px solid var(--primary)' : '1px solid var(--border)',
+                    background: paymentMode === 'DEPOSIT_50' ? 'rgba(34, 197, 94, 0.08)' : 'var(--bg-secondary)',
+                    cursor: 'pointer'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <input
+                        type="radio"
+                        name="paymentMode"
+                        checked={paymentMode === 'DEPOSIT_50'}
+                        onChange={() => setPaymentMode('DEPOSIT_50')}
+                      />
+                      <span style={{ fontSize: '13px', fontWeight: '500' }}>Đặt Cọc 50% qua PayOS</span>
+                    </div>
+                    <span style={{ fontWeight: 'bold', color: 'var(--primary)', fontSize: '13px' }}>
+                      {requiredDeposit.toLocaleString()}đ
+                    </span>
+                  </label>
+                )}
+
+                <label style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '10px 12px',
+                  borderRadius: '8px',
+                  border: paymentMode === 'FULL_100' ? '2px solid var(--primary)' : '1px solid var(--border)',
+                  background: paymentMode === 'FULL_100' ? 'rgba(34, 197, 94, 0.08)' : 'var(--bg-secondary)',
+                  cursor: 'pointer'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <input
+                      type="radio"
+                      name="paymentMode"
+                      checked={paymentMode === 'FULL_100'}
+                      onChange={() => setPaymentMode('FULL_100')}
+                    />
+                    <span style={{ fontSize: '13px', fontWeight: '500' }}>Trả Trước 100% qua PayOS</span>
+                  </div>
+                  <span style={{ fontWeight: 'bold', color: 'var(--primary)', fontSize: '13px' }}>
+                    {finalTotal.toLocaleString()}đ
+                  </span>
+                </label>
+
+                <label style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '10px 12px',
+                  borderRadius: '8px',
+                  border: paymentMode === 'COD' ? '2px solid var(--primary)' : '1px solid var(--border)',
+                  background: paymentMode === 'COD' ? 'rgba(34, 197, 94, 0.08)' : 'var(--bg-secondary)',
+                  opacity: hasCustomEngravedRuler ? 0.5 : 1,
+                  cursor: hasCustomEngravedRuler ? 'not-allowed' : 'pointer'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <input
+                      type="radio"
+                      name="paymentMode"
+                      disabled={hasCustomEngravedRuler}
+                      checked={paymentMode === 'COD'}
+                      onChange={() => setPaymentMode('COD')}
+                    />
+                    <span style={{ fontSize: '13px', fontWeight: '500' }}>Thanh Toán Khi Nhận Hàng (COD)</span>
+                  </div>
+                  {hasCustomEngravedRuler && (
+                    <span style={{ fontSize: '10px', color: '#FF4081', fontStyle: 'italic' }}>Khắc tên: Không hỗ trợ COD</span>
+                  )}
+                </label>
+              </div>
+            </div>
+
             {/* PayOS Deposit Checkbox Consent */}
-            {hasCustomEngravedRuler && (
-              <div style={{ marginTop: '16px', padding: '12px', background: 'var(--bg-secondary)', borderRadius: '8px', border: '1px solid var(--border)' }}>
+            {hasCustomEngravedRuler && paymentMode === 'DEPOSIT_50' && (
+              <div style={{ marginTop: '14px', padding: '12px', background: 'var(--bg-secondary)', borderRadius: '8px', border: '1px solid var(--border)' }}>
                 <label style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', cursor: 'pointer', fontSize: '11px', color: 'var(--text-secondary)' }}>
                   <input
                     type="checkbox"
@@ -313,35 +423,36 @@ export const CartPage: React.FC = () => {
               </div>
             )}
 
-            {/* Payment CTAs */}
-            <div style={{ marginTop: '24px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <button
-                className="btn btn-primary"
-                disabled={loadingPayOS}
-                style={{ width: '100%', padding: '14px', fontSize: '15px', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}
-                onClick={handleTriggerCheckoutPayOS}
-              >
-                {loadingPayOS ? (
-                  <>
-                    <Loader2 size={18} className="animate-spin" /> Đang khởi tạo link PayOS...
-                  </>
-                ) : (
-                  <>
-                    <Lock size={18} /> {hasCustomEngravedRuler ? `Thanh Toán Cọc qua PayOS (${requiredDeposit.toLocaleString()}đ)` : 'Thanh Toán qua PayOS'}
-                  </>
-                )}
-              </button>
-
-              {!hasCustomEngravedRuler && (
+            {/* Dynamic Submit CTAs */}
+            <div style={{ marginTop: '20px' }}>
+              {paymentMode === 'COD' ? (
                 <button
                   className="btn btn-secondary"
-                  style={{ width: '100%', padding: '12px', fontSize: '14px' }}
+                  style={{ width: '100%', padding: '14px', fontSize: '15px', fontWeight: 'bold' }}
                   onClick={handleConfirmCODPayment}
                 >
-                  Thanh Toán Khi Nhận Hàng (COD)
+                  Xác Nhận Đặt Hàng COD ({finalTotal.toLocaleString()}đ)
+                </button>
+              ) : (
+                <button
+                  className="btn btn-primary"
+                  disabled={loadingPayOS}
+                  style={{ width: '100%', padding: '14px', fontSize: '15px', fontWeight: 'bold', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}
+                  onClick={handleTriggerCheckoutPayOS}
+                >
+                  {loadingPayOS ? (
+                    <>
+                      <Loader2 size={18} className="animate-spin" /> Đang khởi tạo link PayOS...
+                    </>
+                  ) : (
+                    <>
+                      <Lock size={18} /> {paymentMode === 'DEPOSIT_50' ? `Thanh Toán Cọc 50% qua PayOS (${requiredDeposit.toLocaleString()}đ)` : `Thanh Toán 100% qua PayOS (${finalTotal.toLocaleString()}đ)`}
+                    </>
+                  )}
                 </button>
               )}
             </div>
+
           </div>
         </div>
       </div>

@@ -25,6 +25,7 @@ import { BulkOrderPage } from '@/pages/BulkOrderPage';
 import { AdminProductionPage } from '@/pages/AdminProductionPage';
 import { WarrantyPage } from '@/pages/WarrantyPage';
 import { Ruler3DPage } from '@/pages/Ruler3DPage';
+import { PaymentResultPage } from '@/pages/PaymentResultPage';
 
 // Modals & Drawers
 import { ProductDetailModal } from '@/components/shared/ProductDetailModal';
@@ -309,6 +310,7 @@ export default function App() {
                     />
                   )}
                   <Route path="/cart" element={<CartPage />} />
+                  <Route path="/payment-result" element={<PaymentResultPage />} />
                   <Route path="/ruler-3d" element={<Ruler3DPage />} />
                   <Route path="/bulk-order" element={<BulkOrderPage />} />
                   <Route path="/warranty" element={<WarrantyPage />} />

@@ -26,9 +26,15 @@ export const authService = {
   },
 
   getCurrentUser: async () => {
-    const response = await get('/auth/me');
-    return response.data;
+    try {
+      const response = await get('/auth/profile');
+      return response.data;
+    } catch (e) {
+      const response = await get('/auth/me');
+      return response.data;
+    }
   },
+
 
   logout: () => {
     localStorage.removeItem('token');
