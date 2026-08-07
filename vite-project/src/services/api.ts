@@ -16,8 +16,8 @@ api.interceptors.request.use((config: any) => {
 
 // Response interceptor: automatically clear expired token from localStorage if 401
 api.interceptors.response.use(
-    (response) => response,
-    (error) => {
+    (response: any) => response,
+    (error: any) => {
         if (error?.response?.status === 401) {
             const isAuthLogin = error?.config?.url?.includes('/auth/login');
             if (!isAuthLogin) {
