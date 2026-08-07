@@ -223,14 +223,14 @@ const Page: React.FC<LoginCardProps> = ({ onLogin = () => { } }) => {
 
               {/* Quick demo login */}
               <div className="w-full border-t border-[var(--color-border)] pt-3">
-                <span className="text-[10px] text-[var(--color-text-secondary)] uppercase tracking-wider block mb-2">Đăng nhập nhanh B2C</span>
+                <span className="text-[10px] text-[var(--color-text-secondary)] uppercase tracking-wider block mb-2">Đăng nhập nhanh</span>
                 <div className="flex gap-2">
                   <button
                     type="button"
                     onClick={() => onLogin('Nguyễn Văn Anh', 'BUYER')}
                     className="flex-1 py-1.5 rounded bg-[var(--color-muted-surface)] border border-[var(--color-border)] text-xs text-white hover:border-[#39FF14] hover:text-[#39FF14] transition-all"
                   >
-                    Khách Hàng B2C
+                    Khách Hàng
                   </button>
                   <button
                     type="button"
